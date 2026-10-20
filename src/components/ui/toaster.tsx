@@ -5,7 +5,7 @@ export function Toasts() {
   const { i18n } = useTranslation();
   return (
     <Toaster
-      position="top-center"
+      position="bottom-right"
       richColors
       closeButton
       dir={i18n.language.startsWith("ar") ? "rtl" : "ltr"}

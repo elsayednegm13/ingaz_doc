@@ -80,48 +80,59 @@ export async function createBooking(
 ) {
   requirePermission(actor, "bookings.manage");
   await assertCaseAccess(db, actor, input.caseId);
-  if (!Number.isFinite(input.expectedContainers) || input.expectedContainers < 0) {
-    throw errors.validation("Check the requested container count before saving the booking.", { expectedContainers: "Enter a valid container count." }, "BOOKING_CONTAINER_COUNT_INVALID");
+  if (!Number.isInteger(input.expectedContainers) || input.expectedContainers < 0 || input.expectedContainers > 100) {
+    throw errors.validation("Check the requested container count before saving the booking.", { expectedContainers: "Enter a whole number from 0 to 100." }, "BOOKING_CONTAINER_COUNT_INVALID");
   }
   const dup = await one(db, "SELECT id FROM bookings WHERE booking_number = ? AND status != 'CANCELLED'", input.bookingNumber);
   if (dup) throw errors.conflict("Booking number already exists");
   const id = newId();
   const now = nowIso();
-  await db
-    .prepare(
-      `INSERT INTO bookings (
-        id, case_id, booking_number, ucr, shipping_line, vessel, voyage, port_of_loading, port_of_discharge,
-        expected_containers, status, planned_loading_date, cutoff_date, planned_etd, planned_eta, notes, version, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, 1, ?, ?)`,
-    )
-    .bind(
-      id,
-      input.caseId,
-      input.bookingNumber,
-      input.ucr ?? null,
-      input.shippingLine ?? null,
-      input.vessel ?? null,
-      input.voyage ?? null,
-      input.portOfLoading ?? null,
-      input.portOfDischarge ?? null,
-      input.expectedContainers,
-      input.plannedLoadingDate ?? null,
-      input.cutoffDate ?? null,
-      input.plannedEtd ?? null,
-      input.plannedEta ?? null,
-      input.notes ?? null,
-      now,
-      now,
-    )
-    .run();
-  for (let i = 1; i <= input.expectedContainers; i += 1) {
-    await db
+  const statements: D1PreparedStatement[] = [
+    db
       .prepare(
-        `INSERT INTO containers (id, booking_id, case_id, slot_index, status, version, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'PLANNED', 1, ?, ?)`,
+        `INSERT INTO bookings (
+          id, case_id, booking_number, ucr, shipping_line, vessel, voyage, port_of_loading, port_of_discharge,
+          expected_containers, status, planned_loading_date, cutoff_date, planned_etd, planned_eta, notes, version, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, 1, ?, ?)`,
       )
-      .bind(newId(), id, input.caseId, i, now, now)
-      .run();
+      .bind(
+        id,
+        input.caseId,
+        input.bookingNumber,
+        input.ucr ?? null,
+        input.shippingLine ?? null,
+        input.vessel ?? null,
+        input.voyage ?? null,
+        input.portOfLoading ?? null,
+        input.portOfDischarge ?? null,
+        input.expectedContainers,
+        input.plannedLoadingDate ?? null,
+        input.cutoffDate ?? null,
+        input.plannedEtd ?? null,
+        input.plannedEta ?? null,
+        input.notes ?? null,
+        now,
+        now,
+      ),
+  ];
+  for (let i = 1; i <= input.expectedContainers; i += 1) {
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO containers (id, booking_id, case_id, slot_index, status, version, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 'PLANNED', 1, ?, ?)`,
+        )
+        .bind(newId(), id, input.caseId, i, now, now),
+    );
+  }
+  // One D1 batch is atomic: the booking and its slots appear together or not at all.
+  try {
+    await db.batch(statements);
+  } catch (error) {
+    if (/unique|constraint/i.test(error instanceof Error ? error.message : String(error))) {
+      throw errors.conflict("Booking number already exists", "BOOKING_NUMBER_TAKEN");
+    }
+    throw error;
   }
   await writeCaseEvent(db, input.caseId, "BOOKING_CREATED", `Booking ${input.bookingNumber}`, actor.id);
   await writeAudit(db, { actorId: actor.id, entityType: "booking", entityId: id, action: "booking.create", requestId });
@@ -153,12 +164,19 @@ export async function updateBooking(
   if (customFieldsRequiredNow("BOOKING", nextStatus)) {
     await assertRequiredCustomFields(db, "BOOKING", id);
   }
-  await db
+  const duplicate = await one(
+    db,
+    "SELECT id FROM bookings WHERE booking_number = ? AND status != 'CANCELLED' AND id != ?",
+    input.bookingNumber,
+    id,
+  );
+  if (duplicate) throw errors.conflict("Booking number already exists", "BOOKING_NUMBER_TAKEN");
+  const updated = await db
     .prepare(
       `UPDATE bookings SET booking_number=?, ucr=?, shipping_line=?, vessel=?, voyage=?, port_of_loading=?, port_of_discharge=?,
         expected_containers=?, status=?, planned_loading_date=?, actual_loading_date=?, cutoff_date=?, planned_etd=?, actual_etd=?,
         planned_eta=?, actual_eta=?, notes=?, version=version+1, updated_at=?
-       WHERE id=?`,
+       WHERE id=? AND version=?`,
     )
     .bind(
       input.bookingNumber,
@@ -180,8 +198,10 @@ export async function updateBooking(
       input.notes ?? null,
       nowIso(),
       id,
+      booking.version,
     )
     .run();
+  if (!updated.meta.changes) throw errors.conflict("Booking was updated by someone else");
   await writeAudit(db, { actorId: actor.id, entityType: "booking", entityId: id, action: "booking.update", requestId });
   await recomputeRemindersForCase(db, env, booking.case_id);
 }
@@ -221,12 +241,14 @@ export async function assignContainerNumber(
   );
   if (dup) throw errors.conflict("This official container number is already assigned");
   if (container.status === "PLANNED") assertContainerTransition(container.status, "NUMBER_ASSIGNED");
-  await db
+  const updated = await db
     .prepare(
-      `UPDATE containers SET official_number = ?, official_number_override = ?, status = CASE WHEN status = 'PLANNED' THEN 'NUMBER_ASSIGNED' ELSE status END, version = version + 1, updated_at = ? WHERE id = ?`,
+      `UPDATE containers SET official_number = ?, official_number_override = ?, status = CASE WHEN status = 'PLANNED' THEN 'NUMBER_ASSIGNED' ELSE status END, version = version + 1, updated_at = ?
+       WHERE id = ? AND version = ?`,
     )
-    .bind(official, input.override ? 1 : 0, nowIso(), containerId)
+    .bind(official, input.override ? 1 : 0, nowIso(), containerId, container.version)
     .run();
+  if (!updated.meta.changes) throw errors.conflict("Container was updated by someone else");
   await db
     .prepare(
       `INSERT INTO container_events (id, container_id, status, event_at, is_actual, note, actor_id, created_at)
@@ -260,10 +282,11 @@ export async function transitionContainer(
     await assertRequiredCustomFields(db, "CONTAINER", containerId);
   }
   const now = nowIso();
-  await db
-    .prepare("UPDATE containers SET status = ?, version = version + 1, updated_at = ? WHERE id = ?")
-    .bind(input.status, now, containerId)
+  const updated = await db
+    .prepare("UPDATE containers SET status = ?, version = version + 1, updated_at = ? WHERE id = ? AND version = ?")
+    .bind(input.status, now, containerId, container.version)
     .run();
+  if (!updated.meta.changes) throw errors.conflict("Container was updated by someone else");
   await db
     .prepare(
       `INSERT INTO container_events (id, container_id, status, event_at, is_actual, note, actor_id, created_at)
@@ -301,9 +324,9 @@ export async function attachBookingConfirmation(
   const booking = await one<{ case_id: string }>(db, "SELECT case_id FROM bookings WHERE id = ?", bookingId);
   if (!booking) throw errors.notFound("Booking not found");
   await assertCaseAccess(db, actor, booking.case_id);
-  const owned = await one(
+  const owned = await one<{ filename: string }>(
     db,
-    "SELECT id FROM upload_sessions WHERE object_key = ? AND owner_user_id = ? AND parent_type = 'booking' AND parent_id = ? AND state = 'COMPLETED'",
+    "SELECT filename FROM upload_sessions WHERE object_key = ? AND owner_user_id = ? AND parent_type = 'booking' AND parent_id = ? AND state = 'COMPLETED'",
     input.r2Key,
     actor.id,
     bookingId,
@@ -314,7 +337,7 @@ export async function attachBookingConfirmation(
     .prepare(
       `INSERT INTO booking_attachments (id, booking_id, r2_key, original_name, kind, created_at) VALUES (?, ?, ?, ?, 'BOOKING_CONFIRMATION', ?)`,
     )
-    .bind(id, bookingId, input.r2Key, input.originalName, nowIso())
+    .bind(id, bookingId, input.r2Key, owned.filename, nowIso())
     .run();
   await writeAudit(db, { actorId: actor.id, entityType: "booking", entityId: bookingId, action: "booking.confirmation", requestId });
   return { id };
@@ -322,6 +345,9 @@ export async function attachBookingConfirmation(
 
 export async function addContainerSlots(db: D1Database, actor: Actor, bookingId: string, count: number) {
   requirePermission(actor, "containers.manage");
+  if (!Number.isInteger(count) || count < 1 || count > 100) {
+    throw errors.validation("Enter a whole number of containers from 1 to 100.", { count: "Enter a whole number from 1 to 100." }, "CONTAINER_COUNT_INVALID");
+  }
   const booking = await one<{ case_id: string; expected_containers: number }>(
     db,
     "SELECT case_id, expected_containers FROM bookings WHERE id = ?",
@@ -331,20 +357,36 @@ export async function addContainerSlots(db: D1Database, actor: Actor, bookingId:
   await assertCaseAccess(db, actor, booking.case_id);
   const last = await one<{ n: number }>(db, "SELECT MAX(slot_index) AS n FROM containers WHERE booking_id = ?", bookingId);
   const start = (last?.n ?? 0) + 1;
-  const now = nowIso();
-  for (let i = 0; i < count; i += 1) {
-    await db
-      .prepare(
-        `INSERT INTO containers (id, booking_id, case_id, slot_index, status, version, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'PLANNED', 1, ?, ?)`,
-      )
-      .bind(newId(), bookingId, booking.case_id, start + i, now, now)
-      .run();
+  if (start + count - 1 > 100) {
+    throw errors.validation("A booking cannot have more than 100 container slots.", { count: "Choose a smaller number." }, "CONTAINER_COUNT_LIMIT");
   }
-  await db
-    .prepare("UPDATE bookings SET expected_containers = expected_containers + ?, updated_at = ? WHERE id = ?")
-    .bind(count, now, bookingId)
-    .run();
+  const now = nowIso();
+  const statements: D1PreparedStatement[] = [];
+  for (let i = 0; i < count; i += 1) {
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO containers (id, booking_id, case_id, slot_index, status, version, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 'PLANNED', 1, ?, ?)`,
+        )
+        .bind(newId(), bookingId, booking.case_id, start + i, now, now),
+    );
+  }
+  statements.push(
+    db
+      .prepare("UPDATE bookings SET expected_containers = expected_containers + ?, updated_at = ? WHERE id = ?")
+      .bind(count, now, bookingId),
+  );
+  try {
+    // Slots and the expected count change in one transaction, so a failed
+    // insert cannot leave a booking reporting a count it does not have.
+    await db.batch(statements);
+  } catch (error) {
+    if (/unique|constraint/i.test(error instanceof Error ? error.message : String(error))) {
+      throw errors.conflict("Container slots changed in another session. Refresh and try again.", "CONTAINER_SLOT_CONFLICT");
+    }
+    throw error;
+  }
 }
 
 export async function listSchedule(db: D1Database, actor: Actor, query: { from?: string; to?: string }) {

@@ -108,9 +108,9 @@ export async function attachVersion(
   );
   if (!req) throw errors.notFound("Requirement not found");
   await assertCaseAccess(db, actor, req.case_id);
-  const owned = await one(
+  const owned = await one<{ id: string; filename: string; mime: string; expected_bytes: number }>(
     db,
-    `SELECT id FROM upload_sessions
+    `SELECT id, filename, mime, expected_bytes FROM upload_sessions
      WHERE object_key = ? AND owner_user_id = ? AND parent_type = 'document_requirement' AND parent_id = ? AND state = 'COMPLETED'`,
     input.r2Key,
     actor.id,
@@ -121,20 +121,35 @@ export async function attachVersion(
     ? "UPLOADED"
     : req.status;
   if (req.status !== nextStatus) assertDocumentTransition(req.status, nextStatus);
-  const last = await one<{ version: number }>(
-    db,
-    "SELECT MAX(version) AS version FROM document_versions WHERE requirement_id = ?",
-    requirementId,
-  );
-  const version = (last?.version ?? 0) + 1;
+  // The upload session is the source of truth for name, MIME and size. Client
+  // metadata is only a claim and must not be able to relabel a stored object.
   const id = newId();
-  await db
-    .prepare(
-      `INSERT INTO document_versions (id, requirement_id, version, r2_key, original_name, content_type, byte_size, checksum, uploaded_by, review_state, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'UPLOADED', ?)`,
-    )
-    .bind(id, requirementId, version, input.r2Key, input.originalName, input.contentType, input.byteSize, input.checksum ?? null, actor.id, nowIso())
-    .run();
+  let version = 0;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const last = await one<{ version: number }>(
+      db,
+      "SELECT MAX(version) AS version FROM document_versions WHERE requirement_id = ?",
+      requirementId,
+    );
+    version = (last?.version ?? 0) + 1;
+    try {
+      await db
+        .prepare(
+          `INSERT INTO document_versions (id, requirement_id, version, r2_key, original_name, content_type, byte_size, checksum, uploaded_by, review_state, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'UPLOADED', ?)`,
+        )
+        .bind(id, requirementId, version, input.r2Key, owned.filename, owned.mime, owned.expected_bytes, input.checksum ?? null, actor.id, nowIso())
+        .run();
+      break;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      version = 0;
+      if (attempt === 2 || !/UNIQUE constraint failed: document_versions\.requirement_id, document_versions\.version/i.test(message)) {
+        throw error;
+      }
+    }
+  }
+  if (!version) throw errors.conflict("Another version was uploaded at the same time. Try again.", "DOCUMENT_VERSION_BUSY");
   await db
     .prepare("UPDATE operation_document_requirements SET status = ?, updated_at = ? WHERE id = ?")
     .bind(nextStatus, nowIso(), requirementId)

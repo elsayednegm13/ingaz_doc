@@ -134,8 +134,11 @@ export async function previewCustomerImport(rows: Record<string, string>[]) {
   return { valid, errors, canCommit: errors.length === 0 };
 }
 
-function csvCell(value: unknown): string {
-  const text = value == null ? "" : String(value);
+export function csvCell(value: unknown): string {
+  let text = value == null ? "" : String(value);
+  // Neutralise spreadsheet formula injection: a customer name such as
+  // =HYPERLINK("…") must stay text when the export is opened in Excel.
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
   if (/[",\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`;
   return text;
 }

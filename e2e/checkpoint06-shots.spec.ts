@@ -9,7 +9,7 @@ test("checkpoint 06 visual capture", async ({ page, browser }) => {
   await page.setViewportSize({ width: 1366, height: 900 });
   await page.goto("/dashboard");
   await clearViteOverlay(page);
-  await expect(page.getByRole("heading", { name: /Operations desk|برج/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Export operations|عمليات التصدير/ })).toBeVisible();
   await page.screenshot({ path: `${root}/en-dashboard-1366.png`, fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: `${root}/en-dashboard-390.png`, fullPage: true });

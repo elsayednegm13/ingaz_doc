@@ -20,11 +20,18 @@ page.on("console", (message) => {
 });
 page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
 
-async function shoot(path, name, ready) {
+async function shoot(path, name, ready, options = {}) {
   await page.goto(`${base}${path}`, { waitUntil: "domcontentloaded" });
   if (ready) await page.waitForSelector(ready, { timeout: 40000 });
   await page.waitForTimeout(800);
-  await page.screenshot({ path: `${outDir}/${name}.png`, fullPage: true });
+  // Capture the real viewport: Chrome downsamples anything captured beyond it
+  // (fullPage or an enlarged viewport), which makes the QA shots look blurred.
+  if (options.bottom) {
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForTimeout(400);
+  }
+  await page.screenshot({ path: `${outDir}/${name}.png` });
+  if (options.bottom) await page.evaluate(() => window.scrollTo(0, 0));
   console.log(`saved ${name}`);
 }
 
@@ -63,6 +70,7 @@ try {
   if (customerId) {
     await shoot("/customers", "customers-admin-ar-1366", "[data-customers='ready']");
     await shoot(`/customers/${customerId}`, "customer-admin-ar-1366", "[data-customer='ready']");
+    await shoot(`/customers/${customerId}`, "customer-admin-ar-1366-bottom", "[data-customer='ready']", { bottom: true });
   } else {
     console.log("no customer found; customer pages not captured");
   }
@@ -85,6 +93,21 @@ try {
   await shoot("/reminders", "reminders-admin-ar-390", "[data-reminders='ready']");
   await shoot("/bookings", "bookings-admin-ar-390", "[data-bookings='ready']");
   if (customerId) await shoot(`/customers/${customerId}`, "customer-admin-ar-390", "[data-customer='ready']");
+
+  // Toasts sit at the bottom, on the side that matches the language direction.
+  // A fresh page keeps the compositor clean: repeated viewport resizes leave the
+  // previous page's raster stale and screenshots come out soft.
+  for (const [tag, lang] of [["ar", "ar"], ["en", "en"]]) {
+    const toastPage = await context.newPage();
+    await toastPage.setViewportSize({ width: 390, height: 844 });
+    await toastPage.addInitScript((value) => localStorage.setItem("exportflow.lang", value), lang);
+    await toastPage.goto(`${base}/customers/not-a-real-id`, { waitUntil: "domcontentloaded" });
+    await toastPage.waitForSelector("[data-sonner-toast]", { timeout: 20000 }).catch(() => {});
+    await toastPage.waitForTimeout(900);
+    await toastPage.screenshot({ path: `${outDir}/toast-${tag}-390.png` });
+    console.log(`saved toast-${tag}-390`);
+    await toastPage.close();
+  }
 } catch (error) {
   console.error("capture failed:", error instanceof Error ? error.message : error);
   await page.screenshot({ path: `${outDir}/design-failure.png`, fullPage: true }).catch(() => {});

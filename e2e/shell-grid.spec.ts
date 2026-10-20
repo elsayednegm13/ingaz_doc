@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { wranglerSql } from "./helpers";
+import { signInWithTemporaryPassword, wranglerSql } from "./helpers";
 
 const phase = process.env.SHELL_PHASE === "before" || process.env.SHELL_PHASE === "after" ? process.env.SHELL_PHASE : null;
 const root = `docs/qa-screenshots/checkpoint-06-7-1/${phase ?? "scratch"}`;
@@ -98,10 +98,7 @@ test("06.7.1 premium workspace visual grid", async ({ page, browser }) => {
   }
   await shoot(page, "admin", "/export-cases", "[data-cases='ready']");
   const context = await browser.newContext();
-  const signed = await context.request.post("/api/auth/sign-in/email", {
-    data: { email: officerEmail, password: officerPassword },
-    headers,
-  });
+  const signed = await signInWithTemporaryPassword(context.request, officerEmail, officerPassword);
   expect(signed.ok(), await signed.text()).toBeTruthy();
   const officerPage = await context.newPage();
   await shoot(officerPage, "limited", "/dashboard", "[data-dashboard='ready']");

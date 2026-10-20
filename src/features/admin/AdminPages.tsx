@@ -94,10 +94,12 @@ export function UsersPage() {
               }
             }}
           >
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <Field label={tx("roleKey", "Role key")}><Input name="key" required dir="ltr" /></Field>
               <Field label={tx("name", "Name")}><Input name="nameEn" required /></Field>
-              <Field label={tx("arabicName", "Arabic name")}><Input name="nameAr" /></Field>
+              <div className="sm:col-span-2">
+                <Field label={tx("arabicName", "Arabic name")}><Input name="nameAr" /></Field>
+              </div>
             </div>
             <fieldset>
               <legend className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{tx("permissions", "Permissions")}</legend>

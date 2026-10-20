@@ -18,7 +18,7 @@ test("C4 Arabic and English direction persists and does not overflow", async ({ 
   expect(overflow).toBeLessThanOrEqual(1);
   await page.setViewportSize({ width: 768, height: 900 });
   await page.goto("/customers/new");
-  await expect(page.getByText("الاسم القانوني")).toBeVisible();
+  await expect(page.locator('input[name="legalName"]')).toBeVisible();
   await expect(page.locator('input[name="iban"]')).toHaveAttribute("dir", "ltr");
   const tabletOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(tabletOverflow).toBeLessThanOrEqual(1);

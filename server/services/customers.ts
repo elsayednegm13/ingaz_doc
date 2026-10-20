@@ -69,6 +69,9 @@ export async function createCustomer(
 ) {
   requirePermission(actor, "customers.create");
   if (!input.legalName?.trim()) throw errors.validation("Legal name is required");
+  // Check the sensitive-bank permission before writing the customer so a
+  // denied bank block cannot leave a partially created record behind.
+  if (input.banks?.length) requirePermission(actor, "customers.bank_details.edit");
   const id = newId();
   const now = nowIso();
   await db
@@ -108,7 +111,6 @@ export async function createCustomer(
       .run();
   }
   if (input.banks?.length) {
-    requirePermission(actor, "customers.bank_details.edit");
     for (const bank of input.banks) {
       await db
         .prepare(
@@ -144,12 +146,25 @@ export async function updateCustomer(
   const existing = await one<{ version: number; legal_name: string }>(db, "SELECT version, legal_name FROM customers WHERE id = ?", id);
   if (!existing) throw errors.notFound("Customer not found");
   if (existing.version !== input.version) throw errors.conflict("Customer was updated by someone else");
-  await db
+  if (input.legalName !== undefined && !input.legalName.trim()) {
+    throw errors.validation("Legal name is required", { legalName: "Enter the legal name." });
+  }
+  const updated = await db
     .prepare(
-      `UPDATE customers SET legal_name = ?, trade_name = ?, country_code = ?, notes = ?, version = version + 1, updated_at = ? WHERE id = ?`,
+      `UPDATE customers SET legal_name = ?, trade_name = ?, country_code = ?, notes = ?, version = version + 1, updated_at = ?
+       WHERE id = ? AND version = ?`,
     )
-    .bind(input.legalName ?? existing.legal_name, input.tradeName ?? null, input.countryCode ?? null, input.notes ?? null, nowIso(), id)
+    .bind(
+      input.legalName ?? existing.legal_name,
+      input.tradeName ?? null,
+      input.countryCode ?? null,
+      input.notes ?? null,
+      nowIso(),
+      id,
+      input.version,
+    )
     .run();
+  if (!updated.meta.changes) throw errors.conflict("Customer was updated by someone else");
   await saveCustomFields(db, actor, "CUSTOMER", id, input.customFields, { enforceRequired: true, requestId });
   await writeAudit(db, { actorId: actor.id, entityType: "customer", entityId: id, action: "customer.update", requestId });
 }

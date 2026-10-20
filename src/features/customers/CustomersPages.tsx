@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { FilePlus, FolderOpen, Landmark, Mail, MapPin, Phone, Search, Users } from "lucide-react";
+import { Building2, FilePlus, FolderOpen, Landmark, Mail, MapPin, Phone, Search, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { can, useSession } from "@/app/access";
@@ -75,8 +75,8 @@ export function CustomersListPage() {
                   <tr key={row.id} className="border-t border-line/70 transition hover:bg-paper/60">
                     <td className="p-3">
                       <Link className="flex items-center gap-3" to={`/customers/${row.id}`}>
-                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent/10 text-xs font-semibold text-accent">
-                          {initials(row.legal_name || row.trade_name || "?")}
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent">
+                          <Building2 className="h-4 w-4" aria-hidden />
                         </span>
                         <span className="min-w-0">
                           <span className="block truncate font-semibold text-ink">{row.legal_name}</span>
@@ -103,8 +103,8 @@ export function CustomersListPage() {
           {rows.map((row) => (
             <Link key={row.id} className="rounded-2xl border border-line bg-card p-4 shadow-[var(--shadow-card)] transition hover:border-accent/40" to={`/customers/${row.id}`}>
               <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent/10 text-sm font-semibold text-accent">
-                  {initials(row.legal_name || row.trade_name || "?")}
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent">
+                  <Building2 className="h-4 w-4" aria-hidden />
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate font-semibold text-ink">{row.legal_name}</span>
@@ -246,8 +246,8 @@ export function CustomerDetailPage() {
     <div className="space-y-4" data-customer="ready">
       <section className="overflow-hidden rounded-2xl border border-line bg-card shadow-[var(--shadow-card)]">
         <div className="flex flex-wrap items-start gap-4 p-5">
-          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-ink text-xl font-semibold text-white">
-            {initials(customer.legal_name || customer.trade_name || "?")}
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-ink text-white">
+            <Building2 className="h-7 w-7" aria-hidden />
           </span>
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-xl font-semibold tracking-tight text-ink">{customer.legal_name}</h1>
@@ -308,7 +308,7 @@ export function CustomerDetailPage() {
                 <li key={contact.id} className="rounded-xl border border-line bg-paper/40 px-3 py-2.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium text-ink">{contact.full_name}</p>
-                    {contact.is_primary === "1" || contact.is_primary === "true" ? (
+                    {isPrimary(contact.is_primary) ? (
                       <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
                         {tx("primary", "Primary")}
                       </span>
@@ -346,7 +346,7 @@ export function CustomerDetailPage() {
                     <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
                       {tx(`addressKind.${address.kind}`, address.kind)}
                     </span>
-                    {address.is_primary === "1" || address.is_primary === "true" ? (
+                    {isPrimary(address.is_primary) ? (
                       <span className="text-[10px] font-semibold text-ink-muted">{tx("primary", "Primary")}</span>
                     ) : null}
                   </div>
@@ -426,13 +426,7 @@ export function CustomerDetailPage() {
   );
 }
 
-/** Two-letter monogram for avatar tiles. */
-function initials(value: string) {
-  return value
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
+/** D1 and JSON both hand back flags as `1`, `"1"` or `true`. */
+function isPrimary(value: unknown) {
+  return value === 1 || value === "1" || value === true || value === "true";
 }

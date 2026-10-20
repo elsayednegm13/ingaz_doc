@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
+import { FileCheck2, Ship } from "lucide-react";
 import { Link } from "react-router";
-import { StatusBadge } from "@/components/ui/status";
+import { useCopy } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 
 export function PageHeader({
@@ -180,31 +181,65 @@ function Lane({
   current: string;
   tone: "docs" | "cargo";
 }) {
-  const index = Math.max(0, steps.findIndex((step) => step.key === current));
+  const { tx } = useCopy();
+  const foundIndex = steps.findIndex((step) => step.key === current);
+  const index = foundIndex === -1 ? 0 : foundIndex;
+  const accent = tone === "docs" ? "bg-accent" : "bg-ink";
+  const dot =
+    status === "CORRECTION_REQUESTED" || status === "EXCEPTION" || status === "MISSING" || status === "NEEDS_CORRECTION"
+      ? "bg-danger"
+      : status === "BANK_APPROVED" || status === "DOCUMENTS_DELIVERED" || status === "DELIVERED_TO_CUSTOMER"
+        ? "bg-ok"
+        : status === "ARRIVED_PORT" || status === "ON_HOLD" || status === "PENDING"
+          ? "bg-warn"
+          : tone === "docs"
+            ? "bg-accent"
+            : "bg-ink";
+  const columns =
+    steps.length >= 5 ? "sm:grid-cols-5" : steps.length === 4 ? "sm:grid-cols-4" : "sm:grid-cols-3";
   return (
     <section className="overflow-hidden rounded-2xl border border-line bg-card shadow-[var(--shadow-card)]" aria-label={title}>
-      <div className={cn("px-4 py-3 text-white", tone === "docs" ? "bg-accent" : "bg-ink")}>
-        <h2 className="text-base font-semibold">{title}</h2>
+      <div className={cn("flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-white", accent)}>
+        <h2 className="flex min-w-0 items-center gap-2 text-base font-semibold">
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/15">
+            {tone === "docs" ? <FileCheck2 className="h-4 w-4" aria-hidden /> : <Ship className="h-4 w-4" aria-hidden />}
+          </span>
+          <span className="truncate">{title}</span>
+        </h2>
+        {status ? (
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-ink">
+            <span aria-hidden className={cn("h-1.5 w-1.5 rounded-full", dot)} />
+            {tx(`status.${status}`, status.replaceAll("_", " "))}
+          </span>
+        ) : null}
       </div>
-      <div className="px-4 pt-3">{status ? <StatusBadge value={status} /> : null}</div>
-      <ol className="grid grid-cols-2 gap-x-3 gap-y-3 px-4 py-4 sm:grid-cols-4">
+      <ol className={cn("grid grid-cols-2 gap-x-4 gap-y-4 px-4 py-4", columns)}>
         {steps.map((step, stepIndex) => {
           const done = stepIndex < index;
-          const active = step.key === current || (index === -1 && stepIndex === 0);
+          const active = foundIndex === -1 ? stepIndex === 0 : step.key === current;
           return (
             <li key={step.key} className="min-w-0" aria-current={active ? "step" : undefined}>
-              <div
+              <span
+                aria-hidden
                 className={cn(
-                  "h-1.5 rounded-full",
-                  done || active ? (tone === "docs" ? "bg-accent" : "bg-ink") : "bg-line",
+                  "block rounded-full transition-colors",
+                  active ? "h-2" : "h-1.5",
+                  done || active ? accent : "bg-line",
                 )}
               />
-              <p className={cn("mt-2 text-xs leading-snug", active ? "font-semibold text-ink" : "text-ink-muted")}>{step.label}</p>
+              <p
+                className={cn(
+                  "mt-2 text-xs leading-snug",
+                  active ? "font-semibold text-ink" : done ? "text-ink" : "text-ink-muted",
+                )}
+              >
+                {step.label}
+              </p>
             </li>
           );
         })}
       </ol>
-      <p className="border-t border-line px-4 py-3 text-sm text-ink">{hint}</p>
+      <p className="border-t border-line bg-paper/40 px-4 py-2.5 text-xs leading-relaxed text-ink-muted">{hint}</p>
     </section>
   );
 }

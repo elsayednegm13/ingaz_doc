@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { patchReminderRule, wranglerSql } from "./helpers";
+import { patchReminderRule, signInWithTemporaryPassword, wranglerSql } from "./helpers";
 
 const origin = "http://127.0.0.1:43174";
 const headers = { origin };
@@ -68,10 +68,7 @@ test("A2 an authenticated user without the case cannot download the file", async
   });
   expect(user.ok()).toBeTruthy();
   const context = await browser.newContext();
-  const signedIn = await context.request.post("/api/auth/sign-in/email", {
-    data: { email, password },
-    headers: { origin },
-  });
+  const signedIn = await signInWithTemporaryPassword(context.request, email, password);
   expect(signedIn.ok(), await signedIn.text()).toBeTruthy();
   const denied = await context.request.get(`/api/v1/files/download?key=${encodeURIComponent(objectKey)}`);
   expect(denied.status()).toBe(404);
@@ -282,10 +279,7 @@ test("A6 a user outside the case cannot read or snooze its reminders", async ({ 
   });
   expect(user.ok(), await user.text()).toBeTruthy();
   const context = await browser.newContext();
-  const signedIn = await context.request.post("/api/auth/sign-in/email", {
-    data: { email, password },
-    headers: { origin },
-  });
+  const signedIn = await signInWithTemporaryPassword(context.request, email, password);
   expect(signedIn.ok(), await signedIn.text()).toBeTruthy();
   const foreign = await (await context.request.get("/api/v1/reminders")).json();
   expect((foreign.data as Array<{ case_id: string }>).some((row) => row.case_id === caseId)).toBe(false);

@@ -37,7 +37,7 @@ test("E2E-01 bootstrap is one-shot and login reaches the dashboard", async ({ pa
   await expect(page.getByText("Sign-in failed")).toBeVisible();
 
   await login(page, admin.email, admin.password);
-  await expect(page.getByRole("heading", { name: "Operations desk" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Export operations" })).toBeVisible();
   await page.context().storageState({ path: ".wrangler-e2e/admin-state.json" });
 });
 

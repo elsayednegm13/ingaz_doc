@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { wranglerSql } from "./helpers";
+import { signInWithTemporaryPassword, wranglerSql } from "./helpers";
 
 const phase = process.env.DOSSIER_PHASE === "before" ? "before" : "after";
 const root = process.env.DOSSIER_ROOT ? `${process.env.DOSSIER_ROOT}/${phase}` : `docs/qa-screenshots/checkpoint-06-6-1/${phase}`;
@@ -126,14 +126,11 @@ test("06.6.1 dossier visual grid", async ({ page, browser }) => {
   await page.screenshot({ path: `${root}/completed-invoices-locked-1366.png`, fullPage: true });
 
   const officerContext = await browser.newContext({ viewport: { width: 1366, height: 900 } });
-  const signed = await officerContext.request.post("/api/auth/sign-in/email", {
-    data: { email: officerEmail, password: officerPassword },
-    headers,
-  });
+  const signed = await signInWithTemporaryPassword(officerContext.request, officerEmail, officerPassword);
   expect(signed.ok(), await signed.text()).toBeTruthy();
   const officerPage = await officerContext.newPage();
   await officerPage.goto("/dashboard");
-  await expect(officerPage.getByRole("heading", { name: /Operations desk|برج/ })).toBeVisible();
+  await expect(officerPage.getByRole("heading", { name: /Export operations|عمليات التصدير/ })).toBeVisible();
   await shoot(officerPage, "limited", directId);
   const denied = await officerPage.goto(`/export-cases/${bankId}`);
   manifest.push({ phase, scenario: "limited-denied-bank", status: String(denied?.status() ?? 0), caseId: bankId, file: "" });

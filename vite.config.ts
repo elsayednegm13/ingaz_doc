@@ -111,7 +111,11 @@ export default defineConfig({
     // (`hmrConfig?.overlay !== false`), so the fetch-failed overlay still blocks clicks.
     hmr: { overlay: false },
     // E2E sets CI=1. File watching restarts the Worker mid-suite.
-    watch: process.env.CI ? null : undefined,
+    // Local runs also must not watch unrelated checkouts or wrangler state:
+    // a locked file there (EBUSY) kills the watcher and the dev server with it.
+    watch: process.env.CI
+      ? null
+      : { ignored: ["**/ingaz_doc/**", "**/.wrangler*/**", "**/dist/**", "**/playwright-report/**"] },
   },
   preview: {
     host: "127.0.0.1",

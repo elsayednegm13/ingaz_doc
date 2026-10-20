@@ -67,6 +67,7 @@ import {
   storeLocalPart,
 } from "../services/uploads";
 import {
+  actorIsRoot,
   createRole,
   ensureAdminRole,
   listRoles,
@@ -85,6 +86,7 @@ type AppEnv = {
   Variables: {
     requestId: string;
     actor: Actor;
+    sessionId: string;
   };
 };
 
@@ -233,19 +235,20 @@ export function createApp() {
   app.post("/api/v1/auth/bootstrap", async (c) => {
     const supplied = c.req.header("x-bootstrap-secret") || "";
     if (!c.env.BOOTSTRAP_SECRET || supplied !== c.env.BOOTSTRAP_SECRET) throw errors.forbidden("Invalid bootstrap secret");
+    const body = await c.req.json<{ email: string; password: string; name: string }>();
+    const email = body.email?.trim().toLowerCase() ?? "";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !body.password || body.password.length < 12) {
+      throw errors.validation("Email and a password of at least 12 characters are required");
+    }
     const consumed = await c.env.DB
       .prepare("UPDATE company_settings SET bootstrap_consumed = 1 WHERE id = 'default' AND bootstrap_consumed = 0")
       .run();
     if (!consumed.meta.changes) throw errors.conflict("Bootstrap is no longer available");
-    const body = await c.req.json<{ email: string; password: string; name: string }>();
-    if (!body.email || !body.password || body.password.length < 12) {
-      throw errors.validation("Email and a password of at least 12 characters are required");
-    }
     const auth = createAuth(c.env);
     const ctx = await auth.$context;
     const user = await ctx.internalAdapter.createUser({
-      email: body.email,
-      name: body.name || "Administrator",
+      email,
+      name: body.name?.trim() || "Administrator",
       emailVerified: true,
     }, { method: "admin" });
     const hash = await ctx.password.hash(body.password);
@@ -275,6 +278,9 @@ export function createApp() {
     const hash = await ctx.password.hash(body.password);
     await ctx.internalAdapter.updatePassword(found.user.id, hash);
     await c.env.DB.prepare("UPDATE user SET must_change_password = 0, is_active = 1 WHERE id = ?").bind(found.user.id).run();
+    // Recovery rotates the credential; every session issued under the old
+    // password must be revoked, including sessions on other devices.
+    await c.env.DB.prepare("DELETE FROM session WHERE user_id = ?").bind(found.user.id).run();
     return jsonSuccess({ ok: true }, c.get("requestId"));
   });
 
@@ -300,6 +306,20 @@ export function createApp() {
     const actor = await loadActor(c.env.DB, session.user.id);
     if (!actor) throw errors.unauthorized("Account is disabled");
     c.set("actor", actor);
+    c.set("sessionId", session.session.id);
+    if (actor.mustChangePassword) {
+      const path = new URL(c.req.url).pathname;
+      const allowed =
+        (c.req.method === "GET" && path.endsWith("/me")) ||
+        (c.req.method === "POST" && path.endsWith("/me/password"));
+      if (!allowed) {
+        throw errors.coded(
+          403,
+          "PASSWORD_CHANGE_REQUIRED",
+          "Change your temporary password before continuing.",
+        );
+      }
+    }
     await next();
   });
 
@@ -326,6 +346,15 @@ export function createApp() {
       headers: c.req.raw.headers,
     });
     await c.env.DB.prepare("UPDATE user SET must_change_password = 0 WHERE id = ?").bind(c.get("actor").id).run();
+    // A password change invalidates every other session. The session that made
+    // the change stays signed in; all older cookies stop working.
+    const sessionId = c.get("sessionId");
+    if (sessionId) {
+      await c.env.DB
+        .prepare("DELETE FROM session WHERE user_id = ? AND id != ?")
+        .bind(c.get("actor").id, sessionId)
+        .run();
+    }
     return jsonSuccess({ ok: true }, c.get("requestId"));
   });
 
@@ -344,14 +373,54 @@ export function createApp() {
   });
   api.post("/users", async (c) => {
     requirePermission(c.get("actor"), "users.manage");
+    // Only a root administrator can assign roles; validate that before writing
+    // the user row so a role failure cannot leave an unusable account behind.
+    if (!actorIsRoot(c.get("actor"))) {
+      throw errors.forbidden("Only an active administrator can create users");
+    }
     const body = await c.req.json<{ email: string; password: string; name: string; roleKeys: string[] }>();
+    const email = body.email?.trim().toLowerCase() ?? "";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw errors.validation("A valid email address is required", { email: "Enter a valid email address." });
+    }
+    if (typeof body.password !== "string" || body.password.length < 12 || body.password.length > 128) {
+      throw errors.validation("The temporary password must be between 12 and 128 characters", {
+        password: "Use at least 12 characters.",
+      });
+    }
+    if (!body.name?.trim() || body.name.trim().length > 120) {
+      throw errors.validation("A name is required", { name: "Enter the user's name." });
+    }
+    const requestedRoles = Array.isArray(body.roleKeys)
+      ? [...new Set(body.roleKeys.filter((key) => typeof key === "string" && key.trim()))]
+      : [];
+    const roleKeys = requestedRoles.length > 0 ? requestedRoles : ["export_officer"];
+    const roles = await all<{ key: string }>(
+      c.env.DB,
+      `SELECT key FROM roles WHERE key IN (${roleKeys.map(() => "?").join(",") || "NULL"})`,
+      ...roleKeys,
+    );
+    if (roles.length !== roleKeys.length) throw errors.validation("Unknown role", { roleKeys: "Choose an existing role." });
+    const exists = await one<{ id: string }>(c.env.DB, "SELECT id FROM user WHERE lower(email) = ?", email);
+    if (exists) throw errors.conflict("A user with this email already exists", "EMAIL_TAKEN");
     const auth = createAuth(c.env);
     const ctx = await auth.$context;
-    const user = await ctx.internalAdapter.createUser({ email: body.email, name: body.name, emailVerified: true }, { method: "admin" });
+    let user: { id: string };
+    try {
+      user = await ctx.internalAdapter.createUser(
+        { email, name: body.name.trim(), emailVerified: true },
+        { method: "admin" },
+      );
+    } catch (error) {
+      if (/unique|constraint/i.test(error instanceof Error ? error.message : String(error))) {
+        throw errors.conflict("A user with this email already exists", "EMAIL_TAKEN");
+      }
+      throw error;
+    }
     const hash = await ctx.password.hash(body.password);
     await ctx.internalAdapter.linkAccount({ userId: user.id, providerId: "credential", accountId: user.id, password: hash });
     await c.env.DB.prepare("UPDATE user SET must_change_password = 1, is_active = 1 WHERE id = ?").bind(user.id).run();
-    await setUserRoles(c.env.DB, c.get("actor"), user.id, body.roleKeys ?? ["export_officer"], c.get("requestId"));
+    await setUserRoles(c.env.DB, c.get("actor"), user.id, roleKeys, c.get("requestId"));
     return jsonSuccess({ id: user.id }, c.get("requestId"), {}, 201);
   });
   api.post("/users/:id/roles", async (c) => {
@@ -631,5 +700,11 @@ export function createApp() {
 export async function handleScheduled(env: Env) {
   const reminders = await processDueReminders(env.DB, env);
   const expiredUploads = await expireUploadSessions(env.DB, env.DOCUMENTS);
-  return { ...reminders, expiredUploads };
+  // Public tracking tokens create one short-lived bucket per client. Remove
+  // buckets older than a day so the table cannot grow without bound.
+  const staleLimits = await env.DB
+    .prepare("DELETE FROM rate_limit_buckets WHERE window_start < ?")
+    .bind(Date.now() - 24 * 60 * 60 * 1000)
+    .run();
+  return { ...reminders, expiredUploads, staleRateLimits: staleLimits.meta.changes ?? 0 };
 }

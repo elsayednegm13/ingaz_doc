@@ -157,31 +157,54 @@ export async function createCase(
   if (!customer) throw errors.notFound("Customer not found");
   const id = newId();
   const year = new Date().getUTCFullYear();
-  const count = await one<{ n: number }>(db, "SELECT COUNT(*) AS n FROM export_cases");
-  const caseReference = `EF-${year}-${String((count?.n ?? 0) + 1).padStart(4, "0")}`;
   const now = nowIso();
+  if (input.invoice) {
+    // Validate before inserting the case: a rejected invoice must not leave a
+    // half-created draft behind. createInvoice re-validates on write.
+    priceInvoice(input.invoice, env.INCOTERMS_EDITION_DEFAULT);
+    const duplicate = await one(db, "SELECT id FROM export_invoices WHERE invoice_number = ?", input.invoice.invoiceNumber);
+    if (duplicate) throw errors.conflict("Invoice number already exists", "INVOICE_NUMBER_TAKEN");
+  }
   const routeStatus = initialRouteStatus(input.documentRoute);
-  await db
-    .prepare(
-      `INSERT INTO export_cases (
-        id, case_reference, customer_id, status, document_route, bank_path_status, direct_path_status,
-        assigned_to, destination_country, next_action, version, created_at, updated_at, created_by
-      ) VALUES (?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, 'Complete commercial details and document checklist', 1, ?, ?, ?)`,
-    )
-    .bind(
-      id,
-      caseReference,
-      customer.id,
-      input.documentRoute,
-      routeStatus.bank,
-      routeStatus.direct,
-      input.assignedTo ?? actor.id,
-      input.destinationCountry ?? customer.country_code,
-      now,
-      now,
-      actor.id,
-    )
-    .run();
+  let caseReference = "";
+  for (let attempt = 0; attempt < 8 && !caseReference; attempt += 1) {
+    const last = await one<{ n: number | null }>(
+      db,
+      "SELECT MAX(CAST(substr(case_reference, 9) AS INTEGER)) AS n FROM export_cases WHERE case_reference LIKE ?",
+      `EF-${year}-%`,
+    );
+    const candidate = `EF-${year}-${String((last?.n ?? 0) + 1).padStart(4, "0")}`;
+    try {
+      await db
+        .prepare(
+          `INSERT INTO export_cases (
+            id, case_reference, customer_id, status, document_route, bank_path_status, direct_path_status,
+            assigned_to, destination_country, next_action, version, created_at, updated_at, created_by
+          ) VALUES (?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, 'Complete commercial details and document checklist', 1, ?, ?, ?)`,
+        )
+        .bind(
+          id,
+          candidate,
+          customer.id,
+          input.documentRoute,
+          routeStatus.bank,
+          routeStatus.direct,
+          input.assignedTo ?? actor.id,
+          input.destinationCountry ?? customer.country_code,
+          now,
+          now,
+          actor.id,
+        )
+        .run();
+      caseReference = candidate;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/UNIQUE constraint failed: export_cases\.case_reference/i.test(message) || attempt === 7) {
+        throw error;
+      }
+    }
+  }
+  if (!caseReference) throw errors.conflict("Could not allocate a case reference. Try again.", "CASE_REFERENCE_BUSY");
   const contact = input.contactId
     ? await one<{ full_name: string; phone: string | null; email: string | null }>(
         db,
@@ -245,6 +268,7 @@ export async function transitionCase(
   requestId: string,
 ) {
   const current = await assertCaseAccess(db, actor, id);
+  if (current.version !== input.version) throw errors.conflict("Case was updated by someone else");
   assertCaseTransition(current.status as CaseStatus, to);
   if (to === "COMPLETED") {
     requirePermission(actor, "export_cases.close");
@@ -270,13 +294,14 @@ export async function transitionCase(
   if (!customFieldsRequiredNow("EXPORT_CASE", current.status) && customFieldsRequiredNow("EXPORT_CASE", to)) {
     await assertRequiredCustomFields(db, "EXPORT_CASE", id);
   }
-  if (current.version !== input.version) throw errors.conflict("Case was updated by someone else");
-  await db
+  const updated = await db
     .prepare(
-      `UPDATE export_cases SET status = ?, closed_at = ?, close_exception_reason = ?, version = version + 1, updated_at = ? WHERE id = ?`,
+      `UPDATE export_cases SET status = ?, closed_at = ?, close_exception_reason = ?, version = version + 1, updated_at = ?
+       WHERE id = ? AND version = ?`,
     )
-    .bind(to, to === "COMPLETED" ? nowIso() : null, input.reason ?? null, nowIso(), id)
+    .bind(to, to === "COMPLETED" ? nowIso() : null, input.reason ?? null, nowIso(), id, input.version)
     .run();
+  if (!updated.meta.changes) throw errors.conflict("Case was updated by someone else");
   await writeCaseEvent(db, id, "CASE_STATUS", `Status ${current.status} → ${to}`, actor.id);
   await writeAudit(db, { actorId: actor.id, entityType: "export_case", entityId: id, action: "case.status", after: { to, reason: input.reason }, requestId });
   await recomputeRemindersForCase(db, env, id);
@@ -285,6 +310,12 @@ export async function transitionCase(
 export async function createInvoice(db: D1Database, actor: Actor, env: Env, caseId: string, input: InvoiceWrite, requestId: string) {
   requirePermission(actor, "invoices.edit");
   const current = await assertCaseAccess(db, actor, caseId);
+  // The same lock that protects ordinary edits must also protect creation:
+  // otherwise a completed operation could grow a brand-new invoice.
+  await assertInvoiceOrdinaryWrite(db, caseId);
+  if (!input.invoiceNumber?.trim()) {
+    throw errors.validation("Invoice number is required", { invoiceNumber: "Enter the invoice number." });
+  }
   const existing = await one(db, "SELECT id FROM export_invoices WHERE invoice_number = ?", input.invoiceNumber);
   if (existing) throw errors.conflict("Invoice number already exists");
   const priced = priceInvoice(input, env.INCOTERMS_EDITION_DEFAULT);
@@ -350,15 +381,25 @@ export async function updateInvoice(
   await assertCaseAccess(db, actor, invoice.case_id);
   await assertInvoiceOrdinaryWrite(db, invoice.case_id);
   if (invoice.version !== input.version) throw errors.conflict("The invoice changed since you opened it. Refresh and review the correction again.", "INVOICE_VERSION");
+  if (!input.invoiceNumber?.trim()) {
+    throw errors.validation("Invoice number is required", { invoiceNumber: "Enter the invoice number." });
+  }
+  const duplicate = await one(
+    db,
+    "SELECT id FROM export_invoices WHERE invoice_number = ? AND id != ?",
+    input.invoiceNumber,
+    invoiceId,
+  );
+  if (duplicate) throw errors.conflict("Invoice number already exists", "INVOICE_NUMBER_TAKEN");
   const priced = priceInvoice(input, "Incoterms 2020");
-  await db
+  const updated = await db
     .prepare(
       `UPDATE export_invoices SET
         invoice_number=?, invoice_date=?, port_of_loading=?, port_of_discharge=?, destination_country=?,
         payment_term_code=?, payment_term_details=?, due_days=?, due_date=?, incoterm=?, incoterms_edition=?, named_place=?,
         currency=?, currency_decimals=?, goods_value_minor=?, invoiced_freight_minor=?, actual_freight_expense_minor=?, invoice_total_minor=?,
         gross_weight_grams=?, net_weight_grams=?, units=?, notes=?, version=version+1, updated_at=?
-       WHERE id=?`,
+       WHERE id=? AND version=?`,
     )
     .bind(
       input.invoiceNumber,
@@ -385,8 +426,12 @@ export async function updateInvoice(
       input.notes ?? null,
       nowIso(),
       invoiceId,
+      invoice.version,
     )
     .run();
+  if (!updated.meta.changes) {
+    throw errors.conflict("The invoice changed since you opened it. Refresh and review the correction again.", "INVOICE_VERSION");
+  }
   await writeAudit(db, { actorId: actor.id, entityType: "invoice", entityId: invoiceId, action: "invoice.update", requestId });
 }
 
@@ -556,14 +601,41 @@ function redactRevisionJson(raw: string, sensitive: Set<string>) {
   }
 }
 
+function parseMoney(value: string, currency: string) {
+  try {
+    return parseDecimalToMinor(value, currency);
+  } catch {
+    throw errors.validation(
+      "Enter a valid amount using digits only.",
+      { amount: "Use digits only, for example 1250.00." },
+      "INVOICE_AMOUNT_INVALID",
+    );
+  }
+}
+
+function parseWeight(value: number, unit: WeightUnit) {
+  if (unit !== "G" && unit !== "KG" && unit !== "T") {
+    throw errors.validation("Choose a supported weight unit.", { weightUnit: "Use G, KG, or T." }, "INVOICE_WEIGHT_INVALID");
+  }
+  try {
+    return toGrams(value, unit);
+  } catch {
+    throw errors.validation(
+      "Enter a valid non-negative weight.",
+      { weight: "Enter zero or a positive number." },
+      "INVOICE_WEIGHT_INVALID",
+    );
+  }
+}
+
 function priceInvoice(input: InvoiceWrite, editionDefault: string | undefined) {
-  const goods = parseDecimalToMinor(input.goodsValue, input.currency);
-  const invoicedFreight = parseDecimalToMinor(input.invoicedFreight ?? "0", input.currency);
-  const actualFreight = parseDecimalToMinor(input.actualFreightExpense ?? "0", input.currency);
-  const total = parseDecimalToMinor(input.invoiceTotal, input.currency);
+  const goods = parseMoney(input.goodsValue, input.currency);
+  const invoicedFreight = parseMoney(input.invoicedFreight ?? "0", input.currency);
+  const actualFreight = parseMoney(input.actualFreightExpense ?? "0", input.currency);
+  const total = parseMoney(input.invoiceTotal, input.currency);
   const unit = input.weightUnit ?? "KG";
-  const gross = toGrams(input.grossWeight, unit);
-  const net = toGrams(input.netWeight, unit);
+  const gross = parseWeight(input.grossWeight, unit);
+  const net = parseWeight(input.netWeight, unit);
   const check = validateInvoiceCommercials({
     incoterm: input.incoterm,
     goodsValueMinor: goods.minorUnits,

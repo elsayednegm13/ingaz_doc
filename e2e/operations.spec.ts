@@ -51,7 +51,8 @@ test("E2E-03 customer contacts, addresses, tax reference and masked bank", async
   await expect(page.getByText("Hany Adel")).toBeVisible();
   await expect(page.getByText("12 Corniche")).toBeVisible();
   await expect(page.getByText("5 Billing Street")).toBeVisible();
-  await expect(page.getByText("last4 6789")).toBeVisible();
+  await expect(page.getByText(/Account ending/)).toContainText("6789");
+  await expect(page.getByText(/IBAN ending/)).toContainText("1234");
   await expect(page.getByText("EG123456789012345678901234")).toHaveCount(0);
 });
 
@@ -275,13 +276,13 @@ test("E2E-10 booking with five slots, two official numbers, and the schedule", a
   await page.locator('input[placeholder="MSCU1234567"]').nth(0).fill("CSQU3054383");
   await page.getByRole("button", { name: "Assign number" }).nth(0).click();
   await page.waitForLoadState("networkidle");
-  await expect(page.getByText("CSQU3054383")).toBeVisible();
+  await expect(page.getByRole("main").getByText("CSQU3054383")).toBeVisible();
   await page.locator('input[placeholder="MSCU1234567"]').nth(1).fill("MSCU1234566");
   await page.getByRole("button", { name: "Assign number" }).nth(1).click();
   await page.waitForLoadState("networkidle");
-  await expect(page.getByText("MSCU1234566")).toBeVisible();
-  await expect(page.getByText("CSQU3054383")).toBeVisible();
-  await expect(page.getByText("MSCU1234566")).toBeVisible();
+  await expect(page.getByRole("main").getByText("MSCU1234566")).toBeVisible();
+  await expect(page.getByRole("main").getByText("CSQU3054383")).toBeVisible();
+  await expect(page.getByRole("main").getByText("MSCU1234566")).toBeVisible();
   await page.goto("/schedule");
   await expect(page.getByRole("link", { name: `BK-${stamp}` }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: /2026-11-02/ })).toBeVisible();
@@ -428,7 +429,7 @@ test("E2E-15 snoozed reminder resolves after the document is approved", async ({
     await page.keyboard.press("Escape");
     await page.reload();
   }
-  const missing = page.locator("div.rounded-xl").filter({ hasText: caseRef }).filter({ hasText: "Required document is not yet uploaded: Commercial Invoice" });
+  const missing = page.locator("article").filter({ hasText: caseRef }).filter({ hasText: "Required document is not yet uploaded: Commercial Invoice" });
   await expect(missing).toBeVisible();
   await expect(missing.getByText("Upload a scanned PDF of the original")).toBeVisible();
   await expect(missing.locator('[data-status="ACTIVE"]')).toBeVisible();
@@ -446,18 +447,18 @@ test("E2E-15 snoozed reminder resolves after the document is approved", async ({
   await approved;
   await expect(requirementCard(page, "Commercial Invoice").locator('[data-status="APPROVED"]')).toBeVisible();
   await page.goto("/reminders");
-  await expect(page.locator("div.rounded-xl").filter({ hasText: caseRef }).filter({ hasText: "not yet uploaded: Commercial Invoice" })).toHaveCount(0);
-  await expect(page.locator("div.rounded-xl").filter({ hasText: caseRef }).filter({ hasText: "waiting for review: Commercial Invoice" })).toHaveCount(0);
-  await expect(page.locator("div.rounded-xl").filter({ hasText: caseRef }).filter({ hasText: "not yet uploaded: Packing List" })).toBeVisible();
-  await expect(page.locator("div.rounded-xl").filter({ hasText: otherRef }).filter({ hasText: "not yet uploaded: Commercial Invoice" })).toBeVisible();
+  await expect(page.locator("article").filter({ hasText: caseRef }).filter({ hasText: "not yet uploaded: Commercial Invoice" })).toHaveCount(0);
+  await expect(page.locator("article").filter({ hasText: caseRef }).filter({ hasText: "waiting for review: Commercial Invoice" })).toHaveCount(0);
+  await expect(page.locator("article").filter({ hasText: caseRef }).filter({ hasText: "not yet uploaded: Packing List" })).toBeVisible();
+  await expect(page.locator("article").filter({ hasText: otherRef }).filter({ hasText: "not yet uploaded: Commercial Invoice" })).toBeVisible();
   await page.reload();
   const again = await page.request.get("/cdn-cgi/local/scheduled?format=json");
   expect(again.ok()).toBeTruthy();
   await page.reload();
-  const otherCard = page.locator("div.rounded-xl").filter({ hasText: otherRef }).filter({ hasText: "not yet uploaded: Commercial Invoice" });
+  const otherCard = page.locator("article").filter({ hasText: otherRef }).filter({ hasText: "not yet uploaded: Commercial Invoice" });
   if (!(await otherCard.count())) await page.reload();
   await expect(page.getByRole("heading", { name: "Reminders" })).toBeVisible();
-  await expect(page.locator("div.rounded-xl").filter({ hasText: caseRef }).filter({ hasText: "not yet uploaded: Commercial Invoice" })).toHaveCount(0);
+  await expect(page.locator("article").filter({ hasText: caseRef }).filter({ hasText: "not yet uploaded: Commercial Invoice" })).toHaveCount(0);
   await expect(otherCard).toBeVisible();
   await patchReminderRule(page.request, "rr-doc-due", { offsetAmount: 0 }, origin);
 });
@@ -481,8 +482,8 @@ test("E2E-15b upload without approval keeps the review reminder", async ({ page 
   await page.locator('[data-tab="documents"]').click();
   await uploadPdf(page, "Commercial Invoice");
   await page.goto("/reminders");
-  await expect(page.locator("div.rounded-xl").filter({ hasText: caseRef }).filter({ hasText: "not yet uploaded: Commercial Invoice" })).toHaveCount(0);
-  const review = page.locator("div.rounded-xl").filter({ hasText: caseRef }).filter({ hasText: "waiting for review: Commercial Invoice" });
+  await expect(page.locator("article").filter({ hasText: caseRef }).filter({ hasText: "not yet uploaded: Commercial Invoice" })).toHaveCount(0);
+  const review = page.locator("article").filter({ hasText: caseRef }).filter({ hasText: "waiting for review: Commercial Invoice" });
   await expect(review).toBeVisible();
   await expect(review.locator('[data-status="RESOLVED"]')).toHaveCount(0);
   await patchReminderRule(page.request, "rr-review", { offsetAmount: 1 }, origin);

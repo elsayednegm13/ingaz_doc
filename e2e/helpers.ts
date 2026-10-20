@@ -67,6 +67,32 @@ export async function login(page: Page, email: string, password: string) {
   }
 }
 
+/**
+ * API sign-in for a user provisioned with a temporary password. The business
+ * API refuses every route except /me and /me/password until the change is done.
+ */
+export async function signInWithTemporaryPassword(
+  request: APIRequestContext,
+  email: string,
+  password: string,
+  newPassword = password,
+) {
+  const headers = { origin: "http://127.0.0.1:43174" };
+  const signedIn = await request.post("/api/auth/sign-in/email", {
+    data: { email, password },
+    headers,
+  });
+  if (!signedIn.ok()) return signedIn;
+  const changed = await request.post("/api/v1/me/password", {
+    data: { currentPassword: password, newPassword },
+    headers,
+  });
+  if (!changed.ok()) {
+    throw new Error(`Temporary password change failed ${changed.status()} ${await changed.text()}`);
+  }
+  return signedIn;
+}
+
 export async function createCustomer(page: Page, name: string, taxId: string) {
   await page.goto("/customers/new");
   await clearViteOverlay(page);
@@ -151,7 +177,8 @@ export async function uploadPdf(page: Page, requirementText: string, file = "e2e
   const response = await complete;
   if (!response.ok()) throw new Error(`Upload failed ${response.status()} ${await response.text()}`);
   const payload = await response.json();
-  await card.locator('[data-status="UPLOADED"]').waitFor();
+  // The card header badge and the version history both expose data-status.
+  await card.locator('[data-status="UPLOADED"]').first().waitFor();
   return payload.data.objectKey as string;
 }
 

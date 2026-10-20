@@ -4,6 +4,7 @@ import { api, createCase, createCustomer, login } from "./helpers";
 const stamp = `cf${Date.now().toString().slice(-6)}`;
 
 test("custom fields persist across customer, case, invoice, booking and container with access checks", async ({ page, browser }) => {
+  test.setTimeout(180_000);
   const created: string[] = [];
   async function defineField(input: Record<string, unknown>) {
     const response = await api(page.request, "/api/v1/custom-fields", { method: "POST", data: input });

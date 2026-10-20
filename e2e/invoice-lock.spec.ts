@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { patchReminderRule, wranglerSql } from "./helpers";
+import { patchReminderRule, signInWithTemporaryPassword, wranglerSql } from "./helpers";
 
 const origin = "http://127.0.0.1:43174";
 const headers = { origin };
@@ -64,13 +64,20 @@ test("completed operation locks ordinary invoice edits and records a privileged 
   });
   expect(user.ok(), await user.text()).toBeTruthy();
   const context = await browser.newContext();
-  const signedIn = await context.request.post("/api/auth/sign-in/email", { data: { email, password }, headers });
+  const signedIn = await signInWithTemporaryPassword(context.request, email, password);
   expect(signedIn.ok(), await signedIn.text()).toBeTruthy();
   const denied = await context.request.put(`/api/v1/invoices/${invoice.id}`, { data: { ...body, version: 2 }, headers });
   expect(denied.status()).toBe(409);
   const deniedBody = await denied.json();
   expect(deniedBody.error.code).toBe("INVOICE_LOCKED");
   expect(JSON.stringify(deniedBody)).not.toContain("SQLITE");
+
+  const extra = await page.request.post(`/api/v1/export-cases/${caseId}/invoices`, {
+    data: { ...body, invoiceNumber: `INV-LOCK-EXTRA-${stamp}` },
+    headers,
+  });
+  expect(extra.status()).toBe(409);
+  expect((await extra.json()).error.code).toBe("INVOICE_LOCKED");
 
   const blank = await page.request.post(`/api/v1/invoices/${invoice.id}/corrections`, { data: { ...body, version: 2, reason: "  " }, headers });
   expect(blank.status()).toBe(422);
@@ -164,7 +171,7 @@ test("reminder repeat interval persists and a manager without the permission can
   const password = "Manager-pass-12";
   expect((await page.request.post("/api/v1/users", { data: { name: "Ops", email, password, roleKeys: ["operations_manager"] }, headers })).ok()).toBeTruthy();
   const context = await browser.newContext();
-  expect((await context.request.post("/api/auth/sign-in/email", { data: { email, password }, headers })).ok()).toBeTruthy();
+  expect((await signInWithTemporaryPassword(context.request, email, password)).ok()).toBeTruthy();
   const denied = await context.request.patch("/api/v1/reminder-rules/rr-courier", { data: { repeatEveryDays: 9 }, headers });
   expect(denied.status()).toBe(403);
   await patchReminderRule(page.request, "rr-courier", { repeatEveryDays: null, repeatCap: null }, headers);

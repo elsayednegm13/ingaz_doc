@@ -1,4 +1,16 @@
-import { Bell, Boxes, CheckCircle2, ClipboardList, FileStack, MousePointerClick, Package } from "lucide-react";
+import {
+  Bell,
+  Boxes,
+  CheckCircle2,
+  ClipboardList,
+  FileStack,
+  History,
+  LockKeyhole,
+  MousePointerClick,
+  Package,
+  PencilLine,
+  ReceiptText,
+} from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
@@ -12,7 +24,7 @@ import { api, uploadFile } from "@/lib/api";
 import { fieldErrorsOf } from "@/lib/fail";
 import { notifyError, notifySuccess } from "@/lib/notify";
 import { useCopy } from "@/lib/copy";
-import { formatMoney, gramsLabel } from "@/lib/utils";
+import { cn, formatMoney, gramsLabel } from "@/lib/utils";
 import { minorToDecimalString } from "@shared/money";
 
 function formatWhen(value: string) {
@@ -21,6 +33,30 @@ function formatWhen(value: string) {
   const locale = document.documentElement.lang.startsWith("ar") ? "ar-EG-u-nu-latn" : "en-GB";
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
+
+// The document lane shows a handful of readable milestones, so every path status
+// maps onto one of them. Without this a finished case (documents delivered) had
+// no matching step and every bar stayed grey.
+const DOCUMENT_STEP_OF = {
+  BANK_ROUTE: {
+    PREPARING: "PREPARING",
+    SCANNED: "AT_BANK",
+    HANDED_TO_BANK: "AT_BANK",
+    BANK_REVIEW: "AT_BANK",
+    CORRECTION_REQUESTED: "AT_BANK",
+    BANK_APPROVED: "APPROVED",
+    COURIER_DISPATCHED: "DISPATCHED",
+    DOCUMENTS_DELIVERED: "DELIVERED",
+  } as Record<string, string>,
+  DIRECT_ROUTE: {
+    PREPARING: "PREPARING",
+    SCANNED: "SCANNED",
+    INTERNAL_REVIEW: "INTERNAL_REVIEW",
+    READY_FOR_DISPATCH: "INTERNAL_REVIEW",
+    COURIER_DISPATCHED: "DISPATCHED",
+    DOCUMENTS_DELIVERED: "DELIVERED",
+  } as Record<string, string>,
+};
 
 export function CasesListPage() {
   const { tx, stored } = useCopy();
@@ -380,20 +416,26 @@ export function CaseDetailPage() {
           data.case.document_route === "BANK_ROUTE"
             ? [
                 { key: "PREPARING", label: tx("status.PREPARING", "Preparing") },
-                { key: "SCANNED", label: tx("status.SCANNED", "Scanned") },
-                { key: "HANDED_TO_BANK", label: tx("status.HANDED_TO_BANK", "Handed to bank") },
-                { key: "BANK_REVIEW", label: tx("status.BANK_REVIEW", "Bank review") },
-                { key: "BANK_APPROVED", label: tx("status.BANK_APPROVED", "Approved by bank") },
+                { key: "AT_BANK", label: tx("docAtBank", "At the bank") },
+                { key: "APPROVED", label: tx("status.BANK_APPROVED", "Approved by bank") },
+                { key: "DISPATCHED", label: tx("status.COURIER_DISPATCHED", "Dispatched") },
+                { key: "DELIVERED", label: tx("status.DOCUMENTS_DELIVERED", "Documents delivered") },
               ]
             : [
-                { key: "NOT_STARTED", label: tx("status.NOT_STARTED", "Not started") },
+                { key: "PREPARING", label: tx("status.PREPARING", "Preparing") },
                 { key: "SCANNED", label: tx("status.SCANNED", "Scanned") },
-                { key: "READY_FOR_DISPATCH", label: tx("status.READY_FOR_DISPATCH", "Ready") },
-                { key: "DISPATCHED", label: tx("status.DISPATCHED", "Dispatched") },
-                { key: "DOCUMENTS_DELIVERED", label: tx("status.DOCUMENTS_DELIVERED", "Documents delivered") },
+                { key: "INTERNAL_REVIEW", label: tx("status.INTERNAL_REVIEW", "Internal review") },
+                { key: "DISPATCHED", label: tx("status.COURIER_DISPATCHED", "Dispatched") },
+                { key: "DELIVERED", label: tx("status.DOCUMENTS_DELIVERED", "Documents delivered") },
               ]
         }
-        documentCurrent={String(data.case.document_route === "BANK_ROUTE" ? data.case.bank_path_status : data.case.direct_path_status)}
+        documentCurrent={
+          (data.case.document_route === "BANK_ROUTE"
+            ? DOCUMENT_STEP_OF.BANK_ROUTE
+            : DOCUMENT_STEP_OF.DIRECT_ROUTE)[
+            String(data.case.document_route === "BANK_ROUTE" ? data.case.bank_path_status : data.case.direct_path_status)
+          ] ?? "PREPARING"
+        }
         goodsTitle={tx("goodsTrack", "Goods track")}
         goodsStatus={data.containers.some((c) => c.status === "DELIVERED_TO_CUSTOMER") ? "DELIVERED_TO_CUSTOMER" : String(data.containers[0]?.status || "PLANNED")}
         goodsHint={`${data.containers.length} ${tx("slotsNote", "container slots. Port arrival is not customer delivery.")}`}
@@ -532,81 +574,151 @@ function InvoicePanel({ invoices, caseStatus, onDone }: { invoices: Array<Record
   const canCorrect = can(user, "invoices.correct_completed");
   return (
     <div className="space-y-3">
-      {locked ? <p className="rounded-xl border border-line bg-paper p-3 text-sm font-medium text-ink" role="status">{tx("invoiceLockedTitle", "Invoice locked")} — {tx("invoiceLocked", "This invoice is locked because the export operation is completed.")}</p> : null}
-      {invoices.map((inv) => (
-        <div key={String(inv.id)} className="rounded-xl border border-line bg-card p-4 text-sm">
-          <div className="font-medium">{String(inv.invoice_number)} · {String(inv.incoterm)} {String(inv.incoterms_edition)}</div>
-          <p><Ltr>{tx("goodsLabel", "Goods")} {formatMoney(inv.goods_value_minor, Number(inv.currency_decimals), String(inv.currency))}</Ltr> · <Ltr>{tx("invoicedFreightLabel", "Invoiced freight")} {formatMoney(inv.invoiced_freight_minor, Number(inv.currency_decimals), String(inv.currency))}</Ltr></p>
-          <p><Ltr>{tx("actualFreightLabel", "Actual freight expense")} {formatMoney(inv.actual_freight_expense_minor, Number(inv.currency_decimals), String(inv.currency))}</Ltr> · <Ltr>{tx("invoiceTotalLabel", "Invoice total")} {formatMoney(inv.invoice_total_minor, Number(inv.currency_decimals), String(inv.currency))}</Ltr></p>
-          <p><Ltr>{tx("grossLabel", "Gross")} {gramsLabel(Number(inv.gross_weight_grams))}</Ltr> · <Ltr>{tx("netLabel", "Net")} {gramsLabel(Number(inv.net_weight_grams))}</Ltr></p>
-          {locked ? <RevisionList invoiceId={String(inv.id)} /> : null}
-          {locked && canCorrect ? (
-            <form
-              className="mt-3 grid gap-2"
-              onSubmit={async (event) => {
-                event.preventDefault();
-                const form = new FormData(event.currentTarget);
-                const decimals = Number(inv.currency_decimals);
-                const money = (name: string, minor: string | number) => String(form.get(name) || minorToDecimalString(minor, decimals));
-                try {
-                  await api(`/api/v1/invoices/${String(inv.id)}/corrections`, {
-                    method: "POST",
-                    body: JSON.stringify({
-                      version: inv.version,
-                      reason: form.get("reason"),
-                      invoiceNumber: inv.invoice_number,
-                      invoiceDate: inv.invoice_date,
-                      paymentTermCode: inv.payment_term_code,
-                      incoterm: inv.incoterm,
-                      currency: inv.currency,
-                      goodsValue: money("goodsValue", inv.goods_value_minor),
-                      invoicedFreight: money("invoicedFreight", inv.invoiced_freight_minor),
-                      actualFreightExpense: money("actualFreightExpense", inv.actual_freight_expense_minor),
-                      invoiceTotal: money("invoiceTotal", inv.invoice_total_minor),
-                      grossWeight: Number(inv.gross_weight_grams) / 1000,
-                      netWeight: Number(inv.net_weight_grams) / 1000,
-                      weightUnit: "KG",
-                      portOfLoading: inv.port_of_loading || undefined,
-                      portOfDischarge: inv.port_of_discharge || undefined,
-                      notes: form.get("notes") || inv.notes,
-                    }),
-                  });
-                  notifySuccess(tx("invoiceCorrected", "Invoice corrected"));
-                  onDone?.();
-                } catch (error) {
-                  event.currentTarget.querySelector("[data-correction-error]")?.replaceChildren(fail(error));
-                }
-              }}
-            >
-              <p className="text-ink-muted">{tx("correctionIntro", "Enter the invoice total yourself. Goods and freight stay separate and are not added together.")}</p>
-              <Field label={tx("goodsLabel", "Goods")}>
-                <Input name="goodsValue" dir="ltr" defaultValue={minorToDecimalString(inv.goods_value_minor, Number(inv.currency_decimals))} />
-              </Field>
-              <Field label={tx("invoicedFreightLabel", "Invoiced freight")}>
-                <Input name="invoicedFreight" dir="ltr" defaultValue={minorToDecimalString(inv.invoiced_freight_minor, Number(inv.currency_decimals))} />
-              </Field>
-              <Field label={tx("actualFreightLabel", "Actual freight expense")}>
-                <Input name="actualFreightExpense" dir="ltr" defaultValue={minorToDecimalString(inv.actual_freight_expense_minor, Number(inv.currency_decimals))} />
-              </Field>
-              <Field label={tx("invoiceTotalLabel", "Invoice total")}>
-                <Input name="invoiceTotal" dir="ltr" defaultValue={minorToDecimalString(inv.invoice_total_minor, Number(inv.currency_decimals))} />
-              </Field>
-              <Field label={tx("correctionReason", "Correction reason")}>
-                <Input name="reason" required minLength={3} />
-              </Field>
-              <Field label={tx("notes", "Notes")}>
-                <Input name="notes" defaultValue={String(inv.notes ?? "")} />
-              </Field>
-              <p data-correction-error role="alert" className="text-danger" />
-              <Button type="submit" size="sm">{tx("exceptionalCorrection", "Exceptional correction")}</Button>
-            </form>
-          ) : null}
-          <div className="mt-3">
-            <CustomFieldsPanel endpoint={`/api/v1/invoices/${String(inv.id)}/custom-fields`} locked={locked} />
+      {locked ? (
+        <div className="flex items-start gap-3 rounded-2xl border border-warn/30 bg-warn/[0.06] px-4 py-3" role="status">
+          <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-warn/15 text-warn" aria-hidden>
+            <LockKeyhole className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink">{tx("invoiceLockedTitle", "Invoice locked")}</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-ink-muted">{tx("invoiceLocked", "This invoice is locked because the export operation is completed.")}</p>
           </div>
         </div>
-      ))}
+      ) : null}
+      {invoices.map((inv) => {
+        const decimals = Number(inv.currency_decimals);
+        const currency = String(inv.currency);
+        const money = (value: string | number) => formatMoney(value, decimals, currency);
+        return (
+          <section key={String(inv.id)} className="overflow-hidden rounded-2xl border border-line bg-card shadow-[var(--shadow-card)]">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-paper/50 px-4 py-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent" aria-hidden>
+                  <ReceiptText className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-ink"><Ltr>{String(inv.invoice_number)}</Ltr></p>
+                  <p className="text-[11px] text-ink-muted"><Ltr>{String(inv.incoterm)} {String(inv.incoterms_edition)}</Ltr></p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="rounded-full border border-line bg-card px-2 py-0.5 text-[11px] font-semibold text-ink-muted"><Ltr>{currency}</Ltr></span>
+                {locked ? (
+                  <span className="rounded-full bg-warn/15 px-2 py-0.5 text-[11px] font-semibold text-warn">{tx("invoiceLockedBadge", "Locked")}</span>
+                ) : null}
+              </div>
+            </div>
+            <dl className="grid gap-2 px-4 py-3 sm:grid-cols-2 xl:grid-cols-4">
+              <MoneyTile label={tx("goodsLabel", "Goods")} value={money(inv.goods_value_minor)} />
+              <MoneyTile label={tx("invoicedFreightLabel", "Invoiced freight")} value={money(inv.invoiced_freight_minor)} />
+              <MoneyTile label={tx("actualFreightLabel", "Actual freight expense")} value={money(inv.actual_freight_expense_minor)} />
+              <MoneyTile label={tx("invoiceTotalLabel", "Invoice total")} value={money(inv.invoice_total_minor)} emphasis />
+            </dl>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-line px-4 py-2 text-xs text-ink-muted">
+              <span>{tx("grossLabel", "Gross")} <span className="font-semibold text-ink tabular-nums"><Ltr>{gramsLabel(Number(inv.gross_weight_grams))}</Ltr></span></span>
+              <span>{tx("netLabel", "Net")} <span className="font-semibold text-ink tabular-nums"><Ltr>{gramsLabel(Number(inv.net_weight_grams))}</Ltr></span></span>
+            </div>
+            {locked ? (
+              <div className="border-t border-line px-4 py-3">
+                <RevisionList invoiceId={String(inv.id)} />
+              </div>
+            ) : null}
+            {locked && canCorrect ? (
+              <form
+                className="border-t border-line bg-paper/40 p-4"
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  const form = new FormData(event.currentTarget);
+                  const money = (name: string, minor: string | number) => String(form.get(name) || minorToDecimalString(minor, decimals));
+                  try {
+                    await api(`/api/v1/invoices/${String(inv.id)}/corrections`, {
+                      method: "POST",
+                      body: JSON.stringify({
+                        version: inv.version,
+                        reason: form.get("reason"),
+                        invoiceNumber: inv.invoice_number,
+                        invoiceDate: inv.invoice_date,
+                        paymentTermCode: inv.payment_term_code,
+                        incoterm: inv.incoterm,
+                        currency: inv.currency,
+                        goodsValue: money("goodsValue", inv.goods_value_minor),
+                        invoicedFreight: money("invoicedFreight", inv.invoiced_freight_minor),
+                        actualFreightExpense: money("actualFreightExpense", inv.actual_freight_expense_minor),
+                        invoiceTotal: money("invoiceTotal", inv.invoice_total_minor),
+                        grossWeight: Number(inv.gross_weight_grams) / 1000,
+                        netWeight: Number(inv.net_weight_grams) / 1000,
+                        weightUnit: "KG",
+                        portOfLoading: inv.port_of_loading || undefined,
+                        portOfDischarge: inv.port_of_discharge || undefined,
+                        notes: form.get("notes") || inv.notes,
+                      }),
+                    });
+                    notifySuccess(tx("invoiceCorrected", "Invoice corrected"));
+                    onDone?.();
+                  } catch (error) {
+                    event.currentTarget.querySelector("[data-correction-error]")?.replaceChildren(fail(error));
+                  }
+                }}
+              >
+                <div className="rounded-xl border border-line bg-card p-4">
+                  <div className="flex items-start gap-2.5">
+                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent/10 text-accent" aria-hidden>
+                      <PencilLine className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-ink">{tx("exceptionalCorrection", "Exceptional correction")}</h3>
+                      <p className="mt-0.5 text-xs leading-relaxed text-ink-muted">{tx("correctionIntro", "Enter the invoice total yourself. Goods and freight stay separate and are not added together.")}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <Field label={tx("goodsLabel", "Goods")}>
+                      <Input name="goodsValue" dir="ltr" inputMode="decimal" defaultValue={minorToDecimalString(inv.goods_value_minor, decimals)} />
+                    </Field>
+                    <Field label={tx("invoicedFreightLabel", "Invoiced freight")}>
+                      <Input name="invoicedFreight" dir="ltr" inputMode="decimal" defaultValue={minorToDecimalString(inv.invoiced_freight_minor, decimals)} />
+                    </Field>
+                    <Field label={tx("actualFreightLabel", "Actual freight expense")}>
+                      <Input name="actualFreightExpense" dir="ltr" inputMode="decimal" defaultValue={minorToDecimalString(inv.actual_freight_expense_minor, decimals)} />
+                    </Field>
+                    <Field label={tx("invoiceTotalLabel", "Invoice total")}>
+                      <Input name="invoiceTotal" dir="ltr" inputMode="decimal" defaultValue={minorToDecimalString(inv.invoice_total_minor, decimals)} />
+                    </Field>
+                    <div className="sm:col-span-2">
+                      <Field label={tx("correctionReason", "Correction reason")}>
+                        <Input name="reason" required minLength={3} />
+                      </Field>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Field label={tx("notes", "Notes")}>
+                        <Input name="notes" defaultValue={String(inv.notes ?? "")} />
+                      </Field>
+                    </div>
+                  </div>
+                  <p data-correction-error role="alert" className="mt-2 text-sm text-danger" />
+                  <div className="mt-3 flex justify-end">
+                    <Button type="submit" size="sm">{tx("exceptionalCorrection", "Exceptional correction")}</Button>
+                  </div>
+                </div>
+              </form>
+            ) : null}
+            <div className="border-t border-line px-4 py-3">
+              <CustomFieldsPanel endpoint={`/api/v1/invoices/${String(inv.id)}/custom-fields`} locked={locked} />
+            </div>
+          </section>
+        );
+      })}
       {!invoices.length ? <p className="text-ink-muted">{tx("noInvoices", "No invoices on this case yet.")}</p> : null}
+    </div>
+  );
+}
+
+function MoneyTile({ label, value, emphasis }: { label: string; value: string; emphasis?: boolean }) {
+  return (
+    <div className={cn("rounded-xl border px-3 py-2.5", emphasis ? "border-accent/30 bg-accent/[0.06]" : "border-line bg-paper/40")}>
+      <dt className="text-[11px] font-semibold text-ink-muted">{label}</dt>
+      <dd className={cn("mt-1 text-sm font-semibold tabular-nums", emphasis ? "text-accent" : "text-ink")}>
+        <Ltr>{value}</Ltr>
+      </dd>
     </div>
   );
 }
@@ -618,32 +730,41 @@ function RevisionList({ invoiceId }: { invoiceId: string }) {
     retry: false,
     queryFn: async () => (await api<Array<Record<string, string>>>(`/api/v1/invoices/${invoiceId}/revisions`)).data,
   });
-  if (query.isLoading) return <p className="mt-3 text-ink-muted">{tx("loadingData", "Loading…")}</p>;
-  if (query.isError) return <p className="mt-3 text-ink-muted">{tx("revisionsUnavailable", "Revision history is not available on this database yet.")}</p>;
-  if (!query.data?.length) return <p className="mt-3 text-ink-muted">{tx("noRevisions", "No corrections have been recorded.")}</p>;
+  if (query.isLoading) return <p className="text-xs text-ink-muted">{tx("loadingData", "Loading…")}</p>;
+  if (query.isError) return <p className="text-xs text-ink-muted">{tx("revisionsUnavailable", "Revision history is not available on this database yet.")}</p>;
+  if (!query.data?.length) return <p className="text-xs text-ink-muted">{tx("noRevisions", "No corrections have been recorded.")}</p>;
   return (
-    <ul className="mt-3 space-y-2">
-      <li className="font-medium">{tx("revisionsTitle", "Correction history")}</li>
-      {query.data.map((row) => {
-        let afterTotal = "";
-        try {
-          const parsed = JSON.parse(row.after_json) as { invoice?: { invoice_total_minor?: number; currency?: string; currency_decimals?: number } };
-          const invoice = parsed.invoice;
-          if (invoice?.invoice_total_minor != null) {
-            afterTotal = formatMoney(invoice.invoice_total_minor, Number(invoice.currency_decimals ?? 2), String(invoice.currency ?? "USD"));
+    <div>
+      <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-muted">
+        <History className="h-3.5 w-3.5" aria-hidden />
+        {tx("revisionsTitle", "Correction history")}
+      </p>
+      <ul className="mt-2 space-y-1.5">
+        {query.data.map((row) => {
+          let afterTotal = "";
+          try {
+            const parsed = JSON.parse(row.after_json) as { invoice?: { invoice_total_minor?: number; currency?: string; currency_decimals?: number } };
+            const invoice = parsed.invoice;
+            if (invoice?.invoice_total_minor != null) {
+              afterTotal = formatMoney(invoice.invoice_total_minor, Number(invoice.currency_decimals ?? 2), String(invoice.currency ?? "USD"));
+            }
+          } catch {
+            afterTotal = "";
           }
-        } catch {
-          afterTotal = "";
-        }
-        return (
-        <li key={row.id} className="rounded-lg border border-line p-2">
-          <p>{row.reason}</p>
-          {afterTotal ? <p><Ltr>{tx("invoiceTotalLabel", "Invoice total")} {afterTotal}</Ltr></p> : null}
-          <p className="text-ink-muted"><Ltr>{row.created_at}</Ltr></p>
-        </li>
-        );
-      })}
-    </ul>
+          return (
+            <li key={row.id} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 rounded-lg border border-line bg-paper/40 px-3 py-2 text-xs">
+              <span className="font-medium text-ink">{row.reason}</span>
+              {afterTotal ? (
+                <span className="text-ink-muted">
+                  {tx("invoiceTotalLabel", "Invoice total")} <span className="font-semibold text-ink tabular-nums"><Ltr>{afterTotal}</Ltr></span>
+                </span>
+              ) : null}
+              <span className="text-ink-muted tabular-nums">{formatWhen(row.created_at)}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 

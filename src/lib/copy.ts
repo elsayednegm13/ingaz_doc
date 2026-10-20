@@ -121,11 +121,18 @@ export function useCopy() {
   return { ar, tx, t, i18n, stored, fail, activity, ruleName };
 }
 
+const BIDI_MARKS = /[\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g;
+
 export function formatDay(value: string | number | null | undefined, language: string) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return new Intl.DateTimeFormat(language.startsWith("ar") ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium" }).format(date);
+  const formatted = new Intl.DateTimeFormat(language.startsWith("ar") ? "ar-EG-u-nu-latn" : "en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+  return formatted.replace(BIDI_MARKS, "");
 }
 
 export function formatWhen(value: string | number | null | undefined, language: string) {
@@ -135,5 +142,5 @@ export function formatWhen(value: string | number | null | undefined, language: 
   return new Intl.DateTimeFormat(language.startsWith("ar") ? "ar-EG-u-nu-latn" : "en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(date);
+  }).format(date).replace(BIDI_MARKS, "");
 }
