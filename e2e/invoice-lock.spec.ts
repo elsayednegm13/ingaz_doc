@@ -1,8 +1,12 @@
+import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { patchReminderRule, signInWithTemporaryPassword, wranglerSql } from "./helpers";
+import { e2eRunRoot, patchReminderRule, signInWithTemporaryPassword, wranglerSql } from "./helpers";
 
 const origin = "http://127.0.0.1:43174";
 const headers = { origin };
+const runRoot = e2eRunRoot();
+const persist = path.join(runRoot, "state");
+const storageState = path.join(runRoot, "admin-state.json");
 
 test("completed operation locks ordinary invoice edits and records a privileged correction", async ({ page, browser }) => {
   const stamp = Date.now().toString().slice(-6);
@@ -55,7 +59,7 @@ test("completed operation locks ordinary invoice edits and records a privileged 
   const openEdit = await page.request.put(`/api/v1/invoices/${invoice.id}`, { data: { ...body, invoiceTotal: "100.00" }, headers });
   expect(openEdit.ok(), await openEdit.text()).toBeTruthy();
 
-  wranglerSql(".wrangler-e2e/state", `UPDATE export_cases SET status = 'COMPLETED' WHERE id = '${caseId}'`);
+  wranglerSql(persist, `UPDATE export_cases SET status = 'COMPLETED' WHERE id = '${caseId}'`);
   const email = `ops.${stamp}@example.com`;
   const password = "Manager-pass-12";
   const user = await page.request.post("/api/v1/users", {
@@ -107,7 +111,7 @@ test("completed operation locks ordinary invoice edits and records a privileged 
 
   // A reused Vite proxy socket can reset with HTML "fetch failed" (ECONNRESET) after the
   // bootstrap race. A new context opens a fresh connection. The failed attempt does not commit.
-  const fresh = await browser.newContext({ storageState: ".wrangler-e2e/admin-state.json" });
+  const fresh = await browser.newContext({ storageState });
   const corrected = await fresh.request.post(`/api/v1/invoices/${invoice.id}/corrections`, {
     data: { ...body, version: 2, reason: "Commercial total was recorded short.", customFields: { [fieldKey]: "corrected note" } },
     headers,

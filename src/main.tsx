@@ -2,22 +2,33 @@ import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-qu
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
+import { enableTelemetry, startWebVitals } from "@workspace/boosthis-runtime-web";
+import { BOOSTHIS_APP_NAME, BOOSTHIS_INSTALL_ID } from "@/app/boosthis";
 import { SessionProvider } from "@/app/session";
 import { AppRouter } from "@/app/router";
 import { Toasts } from "@/components/ui/toaster";
 import { ApiRequestError } from "@/lib/api";
-import { notifyError } from "@/lib/notify";
+import { retryReadQuery } from "@/lib/query-retry";
+import { notifyError, notifySuccess } from "@/lib/notify";
+import { initOfflineOutboxListeners, onOfflineSyncComplete } from "@/lib/offline-outbox";
 import "./app/i18n";
 import "./index.css";
+
+const boosthisKey = import.meta.env.VITE_BOOSTHIS_PROJECT_KEY;
+enableTelemetry({
+  installId: BOOSTHIS_INSTALL_ID,
+  inviteKey: boosthisKey,
+  appName: BOOSTHIS_APP_NAME,
+  endpoint: "https://www.boosthis.com/api",
+});
+startWebVitals({ bubble: true, projectKey: boosthisKey });
 
 const client = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      staleTime: 5_000,
-      refetchOnWindowFocus: true,
-      refetchInterval: 15_000,
-      refetchIntervalInBackground: false,
+      retry: retryReadQuery,
+      staleTime: 90_000,
+      refetchOnWindowFocus: false,
     },
   },
   queryCache: new QueryCache({
@@ -26,6 +37,12 @@ const client = new QueryClient({
       notifyError(error);
     },
   }),
+});
+
+initOfflineOutboxListeners();
+onOfflineSyncComplete((syncedCount) => {
+  void client.invalidateQueries();
+  notifySuccess(`تمت مزامنة ${syncedCount} تعديلات محفوظة محلياً مع الخادم بنجاح`);
 });
 
 window.addEventListener("unhandledrejection", (event) => {

@@ -1,0 +1,168 @@
+
+ ⛅️ wrangler 4.149.0 (update available 4.151.3)
+───────────────────────────────────────────────
+Resource location: local 
+
+Use --remote if you want to access the remote instance.
+
+Migrations to be applied:
+┌──────────────────────────────┐
+│ name                         │
+├──────────────────────────────┤
+│ 0001_init.sql                │
+├──────────────────────────────┤
+│ 0002_seed.sql                │
+├──────────────────────────────┤
+│ 0003_checkpoint.sql          │
+├──────────────────────────────┤
+│ 0004_invoice_revisions.sql   │
+├──────────────────────────────┤
+│ 0005_idempotency.sql         │
+├──────────────────────────────┤
+│ 0006_customer_imports.sql    │
+├──────────────────────────────┤
+│ 0007_performance_indexes.sql │
+└──────────────────────────────┘
+? About to apply 7 migration(s)
+Your database may not be available to serve requests during the migration, continue?
+🤖 Using fallback value in non-interactive context: yes
+🌀 Executing on local database exportflow-local (local-exportflow-not-a-remote-id) from .tmp-migrate-check\v3\d1:
+🌀 To execute on your remote database, add a --remote flag to your wrangler command.
+🚣 71 commands executed successfully.
+┌──────────────────────────────┬────────┐
+│ name                         │ status │
+├──────────────────────────────┼────────┤
+│ 0001_init.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0002_seed.sql                │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0003_checkpoint.sql          │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0004_invoice_revisions.sql   │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0005_idempotency.sql         │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0006_customer_imports.sql    │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0007_performance_indexes.sql │ 🕒️    │
+└──────────────────────────────┴────────┘
+🌀 Executing on local database exportflow-local (local-exportflow-not-a-remote-id) from .tmp-migrate-check\v3\d1:
+🌀 To execute on your remote database, add a --remote flag to your wrangler command.
+🚣 12 commands executed successfully.
+┌──────────────────────────────┬────────┐
+│ name                         │ status │
+├──────────────────────────────┼────────┤
+│ 0001_init.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0002_seed.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0003_checkpoint.sql          │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0004_invoice_revisions.sql   │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0005_idempotency.sql         │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0006_customer_imports.sql    │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0007_performance_indexes.sql │ 🕒️    │
+└──────────────────────────────┴────────┘
+🌀 Executing on local database exportflow-local (local-exportflow-not-a-remote-id) from .tmp-migrate-check\v3\d1:
+🌀 To execute on your remote database, add a --remote flag to your wrangler command.
+🚣 5 commands executed successfully.
+┌──────────────────────────────┬────────┐
+│ name                         │ status │
+├──────────────────────────────┼────────┤
+│ 0001_init.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0002_seed.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0003_checkpoint.sql          │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0004_invoice_revisions.sql   │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0005_idempotency.sql         │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0006_customer_imports.sql    │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0007_performance_indexes.sql │ 🕒️    │
+└──────────────────────────────┴────────┘
+🌀 Executing on local database exportflow-local (local-exportflow-not-a-remote-id) from .tmp-migrate-check\v3\d1:
+🌀 To execute on your remote database, add a --remote flag to your wrangler command.
+🚣 5 commands executed successfully.
+┌──────────────────────────────┬────────┐
+│ name                         │ status │
+├──────────────────────────────┼────────┤
+│ 0001_init.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0002_seed.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0003_checkpoint.sql          │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0004_invoice_revisions.sql   │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0005_idempotency.sql         │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0006_customer_imports.sql    │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0007_performance_indexes.sql │ 🕒️    │
+└──────────────────────────────┴────────┘
+🌀 Executing on local database exportflow-local (local-exportflow-not-a-remote-id) from .tmp-migrate-check\v3\d1:
+🌀 To execute on your remote database, add a --remote flag to your wrangler command.
+🚣 3 commands executed successfully.
+┌──────────────────────────────┬────────┐
+│ name                         │ status │
+├──────────────────────────────┼────────┤
+│ 0001_init.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0002_seed.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0003_checkpoint.sql          │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0004_invoice_revisions.sql   │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0005_idempotency.sql         │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0006_customer_imports.sql    │ 🕒️    │
+├──────────────────────────────┼────────┤
+│ 0007_performance_indexes.sql │ 🕒️    │
+└──────────────────────────────┴────────┘
+🌀 Executing on local database exportflow-local (local-exportflow-not-a-remote-id) from .tmp-migrate-check\v3\d1:
+🌀 To execute on your remote database, add a --remote flag to your wrangler command.
+🚣 5 commands executed successfully.
+┌──────────────────────────────┬────────┐
+│ name                         │ status │
+├──────────────────────────────┼────────┤
+│ 0001_init.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0002_seed.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0003_checkpoint.sql          │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0004_invoice_revisions.sql   │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0005_idempotency.sql         │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0006_customer_imports.sql    │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0007_performance_indexes.sql │ 🕒️    │
+└──────────────────────────────┴────────┘
+🌀 Executing on local database exportflow-local (local-exportflow-not-a-remote-id) from .tmp-migrate-check\v3\d1:
+🌀 To execute on your remote database, add a --remote flag to your wrangler command.
+🚣 7 commands executed successfully.
+┌──────────────────────────────┬────────┐
+│ name                         │ status │
+├──────────────────────────────┼────────┤
+│ 0001_init.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0002_seed.sql                │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0003_checkpoint.sql          │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0004_invoice_revisions.sql   │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0005_idempotency.sql         │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0006_customer_imports.sql    │ ✅     │
+├──────────────────────────────┼────────┤
+│ 0007_performance_indexes.sql │ ✅     │
+└──────────────────────────────┴────────┘

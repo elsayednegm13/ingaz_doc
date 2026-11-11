@@ -1,5 +1,6 @@
+import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { adminCreds, clearViteOverlay, login } from "./helpers";
+import { adminCreds, clearViteOverlay, e2eRunRoot, login } from "./helpers";
 
 test("E2E-01 bootstrap is one-shot and login reaches the dashboard", async ({ page, request }) => {
   const admin = adminCreds();
@@ -38,7 +39,8 @@ test("E2E-01 bootstrap is one-shot and login reaches the dashboard", async ({ pa
 
   await login(page, admin.email, admin.password);
   await expect(page.getByRole("heading", { name: "Export operations" })).toBeVisible();
-  await page.context().storageState({ path: ".wrangler-e2e/admin-state.json" });
+  const runRoot = e2eRunRoot();
+  await page.context().storageState({ path: path.join(runRoot, "admin-state.json") });
 });
 
 test("E2E-01 logout and protected redirect", async ({ browser }) => {

@@ -6,28 +6,41 @@ import { errors } from "../http/errors";
 import type { Actor } from "./actor";
 import { assertCaseAccess, requirePermission } from "./actor";
 import { writeAudit, writeCaseEvent } from "./audit";
+import { retireReplacedVersions } from "./customer-files";
 import { recomputeRemindersForCase } from "./reminders";
 
-export async function applyTemplateToCase(db: D1Database, caseId: string, templateId?: string) {
+/**
+ * Builds the document requirement rows for a template without writing them, so
+ * a case creation can add them to its own D1 batch.
+ */
+export async function templateRequirementStatements(
+  db: D1Database,
+  caseId: string,
+  templateId?: string,
+): Promise<D1PreparedStatement[]> {
   const template = templateId
     ? await one<{ id: string }>(db, "SELECT id FROM document_template_sets WHERE id = ?", templateId)
     : await one<{ id: string }>(db, "SELECT id FROM document_template_sets WHERE is_default = 1 LIMIT 1");
-  if (!template) return;
+  if (!template) return [];
   const items = await all<{ document_type_id: string; required: number }>(
     db,
     "SELECT document_type_id, required FROM document_template_items WHERE template_id = ?",
     template.id,
   );
   const now = nowIso();
-  for (const item of items) {
-    await db
+  return items.map((item) =>
+    db
       .prepare(
         `INSERT INTO operation_document_requirements (id, case_id, document_type_id, required, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, 'MISSING', ?, ?)`,
       )
-      .bind(newId(), caseId, item.document_type_id, item.required, now, now)
-      .run();
-  }
+      .bind(newId(), caseId, item.document_type_id, item.required, now, now),
+  );
+}
+
+export async function applyTemplateToCase(db: D1Database, caseId: string, templateId?: string) {
+  const statements = await templateRequirementStatements(db, caseId, templateId);
+  if (statements.length) await db.batch(statements);
 }
 
 export async function addRequirement(
@@ -78,6 +91,80 @@ export async function addRequirement(
   return { id };
 }
 
+export async function restorePreviousDocument(db: D1Database, actor: Actor, caseId: string, documentId: string, requestId: string) {
+  requirePermission(actor, "documents.restore_version");
+  const requirement = await one<{ id: string; case_id: string }>(
+    db,
+    "SELECT id, case_id FROM operation_document_requirements WHERE id = ? AND case_id = ?",
+    documentId,
+    caseId,
+  );
+  if (!requirement) throw errors.notFound("Document not found");
+  await assertCaseAccess(db, actor, requirement.case_id);
+  let current: { id: string } | null;
+  let previous: { id: string } | null;
+  try {
+    current = await one<{ id: string }>(
+      db,
+      `SELECT id FROM document_versions
+       WHERE requirement_id = ? AND archived_at IS NULL
+       ORDER BY version DESC LIMIT 1`,
+      documentId,
+    );
+    previous = await one<{ id: string }>(
+      db,
+      `SELECT id FROM document_versions
+       WHERE requirement_id = ? AND archived_at IS NOT NULL
+       ORDER BY version DESC LIMIT 1`,
+      documentId,
+    );
+  } catch (error) {
+    if (isMissingArchiveColumn(error)) {
+      throw errors.coded(503, "SCHEMA_UPGRADE_REQUIRED", "This deployment is waiting for a database upgrade. No change was saved.");
+    }
+    throw error;
+  }
+  if (!current) throw errors.validation("There is no current file to keep.");
+  if (!previous) throw errors.validation("There is no previous version to restore.");
+  const now = nowIso();
+  const [swapped] = await db.batch([
+    db
+      .prepare(
+        `UPDATE document_versions
+            SET archived_at = CASE id WHEN ? THEN ? ELSE NULL END
+          WHERE requirement_id = ?
+            AND id IN (?, ?)
+            AND ((id = ? AND archived_at IS NULL) OR (id = ? AND archived_at IS NOT NULL))
+            AND EXISTS (
+              SELECT 1 FROM document_versions
+              WHERE id = ? AND requirement_id = ? AND archived_at IS NULL
+            )
+            AND EXISTS (
+              SELECT 1 FROM document_versions
+              WHERE id = ? AND requirement_id = ? AND archived_at IS NOT NULL
+            )`,
+      )
+      .bind(current.id, now, documentId, current.id, previous.id, current.id, previous.id, current.id, documentId, previous.id, documentId),
+  ]);
+  if ((swapped?.meta?.changes ?? 0) !== 2) {
+    throw errors.conflict("The document changed while the previous version was being restored. Reload it and try again.", "DOCUMENT_CHANGED");
+  }
+  await writeAudit(db, {
+    actorId: actor.id,
+    entityType: "document_requirement",
+    entityId: documentId,
+    action: "document.restore",
+    after: { archivedVersionId: current.id, restoredVersionId: previous.id },
+    requestId,
+  });
+  return { archivedVersionId: current.id, restoredVersionId: previous.id };
+}
+
+function isMissingArchiveColumn(error: unknown) {
+  const text = error instanceof Error ? `${error.message} ${String(error.cause ?? "")}` : String(error);
+  return /no such column/i.test(text) && /archived_at/i.test(text);
+}
+
 export async function removeRequirement(db: D1Database, actor: Actor, env: Env, requirementId: string, requestId: string) {
   const req = await one<{ id: string; case_id: string }>(
     db,
@@ -87,7 +174,37 @@ export async function removeRequirement(db: D1Database, actor: Actor, env: Env, 
   if (!req) throw errors.notFound("Requirement not found");
   requirePermission(actor, "documents.upload");
   await assertCaseAccess(db, actor, req.case_id);
-  await db.prepare("DELETE FROM operation_document_requirements WHERE id = ?").bind(requirementId).run();
+  // Fail-closed guard: never physically delete a requirement that already carries
+  // uploaded document versions or review evidence. The check is part of the
+  // DELETE statement itself so a concurrent attachVersion can never slip a
+  // version in between a check and the delete. Physical destruction policy for
+  // unused requirements remains OD-08 pending; until then this path rejects
+  // deletion instead of cascading loss.
+  const deleted = await db
+    .prepare(
+      `DELETE FROM operation_document_requirements
+        WHERE id = ?
+          AND NOT EXISTS (SELECT 1 FROM document_versions WHERE requirement_id = ?)
+          AND NOT EXISTS (
+            SELECT 1 FROM document_reviews r
+            JOIN document_versions v ON v.id = r.version_id
+            WHERE v.requirement_id = ?
+          )`,
+    )
+    .bind(requirementId, requirementId, requirementId)
+    .run();
+  if ((deleted.meta.changes ?? 0) === 0) {
+    const stillThere = await one<{ id: string }>(
+      db,
+      "SELECT id FROM operation_document_requirements WHERE id = ?",
+      requirementId,
+    );
+    if (!stillThere) throw errors.notFound("Requirement not found");
+    throw errors.conflict(
+      "Cannot delete a document requirement that already has uploaded document versions or review history.",
+      "REQUIREMENT_HAS_VERSIONS",
+    );
+  }
   await writeAudit(db, { actorId: actor.id, entityType: "document_requirement", entityId: requirementId, action: "requirement.remove", requestId });
   await recomputeRemindersForCase(db, env, req.case_id);
 }
@@ -117,9 +234,10 @@ export async function attachVersion(
     requirementId,
   );
   if (!owned) throw errors.notFound("Upload is not a completed session for this document");
-  const nextStatus: DocumentRequirementStatus = req.status === "NEEDS_CORRECTION" || req.status === "MISSING" || req.status === "UPLOADED"
-    ? "UPLOADED"
-    : req.status;
+  const nextStatus: DocumentRequirementStatus = "UPLOADED";
+  // A newly attached file has not been reviewed. It must never inherit a
+  // previous version's APPROVED / WAIVED / UNDER_REVIEW state, otherwise an
+  // unreviewed upload would satisfy the "documents complete" gate.
   if (req.status !== nextStatus) assertDocumentTransition(req.status, nextStatus);
   // The upload session is the source of truth for name, MIME and size. Client
   // metadata is only a claim and must not be able to relabel a stored object.
@@ -150,6 +268,7 @@ export async function attachVersion(
     }
   }
   if (!version) throw errors.conflict("Another version was uploaded at the same time. Try again.", "DOCUMENT_VERSION_BUSY");
+  await retireReplacedVersions(db, env.DOCUMENTS, requirementId, id);
   await db
     .prepare("UPDATE operation_document_requirements SET status = ?, updated_at = ? WHERE id = ?")
     .bind(nextStatus, nowIso(), requirementId)
@@ -168,7 +287,7 @@ export async function reviewDocument(
   input: { decision: "APPROVED" | "NEEDS_CORRECTION" | "UNDER_REVIEW" | "WAIVED"; comment?: string; reason?: string },
   requestId: string,
 ) {
-  requirePermission(actor, input.decision === "WAIVED" ? "documents.review" : "documents.review");
+  requirePermission(actor, "documents.review");
   const req = await one<{ id: string; case_id: string; status: DocumentRequirementStatus }>(
     db,
     "SELECT id, case_id, status FROM operation_document_requirements WHERE id = ?",
@@ -178,20 +297,74 @@ export async function reviewDocument(
   await assertCaseAccess(db, actor, req.case_id);
   assertDocumentTransition(req.status, input.decision);
   if (input.decision === "WAIVED" && !input.reason) throw errors.validation("Waiver requires a reason");
-  await db
-    .prepare("UPDATE operation_document_requirements SET status = ?, waived_reason = ?, updated_at = ? WHERE id = ?")
-    .bind(input.decision, input.decision === "WAIVED" ? input.reason ?? null : null, nowIso(), requirementId)
-    .run();
-  const latest = await one<{ id: string }>(
+  // The requirement already carries this decision. Repeating it would create a
+  // second review row for the same version, so the request is a no-op.
+  if (req.status === input.decision) return;
+  // The decision belongs to the latest version as well as the requirement.
+  // Both writes and the review row are one batch so the requirement status,
+  // the review history and document_versions.review_state cannot diverge if a
+  // write fails. WAIVED is a requirement-level decision: an existing version
+  // keeps its own last review state instead of being relabelled as waived.
+  const latest = await one<{ id: string; version: number }>(
     db,
-    "SELECT id FROM document_versions WHERE requirement_id = ? ORDER BY version DESC LIMIT 1",
+    "SELECT id, version FROM document_versions WHERE requirement_id = ? ORDER BY version DESC LIMIT 1",
     requirementId,
   );
+  const now = nowIso();
+  // The batch is the guard, not the read above: a review reads the requirement
+  // and the latest version, then writes. Because another request can attach a
+  // version inside that window, every write re-checks that the requirement is
+  // still in the state that was reviewed AND that no newer version exists.
+  // Both predicates are evaluated by the write itself, so an approval can never
+  // land on a requirement whose latest file was never reviewed. A false guard
+  // changes no row, and the caller then returns 409 without side effects.
+  const noNewerVersion = "AND NOT EXISTS (SELECT 1 FROM document_versions v2 WHERE v2.requirement_id = ? AND v2.version > ?)";
+  const guardBinds = latest ? [requirementId, latest.version] : [];
+  const statements = [
+    db
+      .prepare(
+        `UPDATE operation_document_requirements
+            SET status = ?, waived_reason = ?, updated_at = ?
+          WHERE id = ? AND status = ? ${latest ? noNewerVersion : ""}`,
+      )
+      .bind(
+        input.decision,
+        input.decision === "WAIVED" ? input.reason ?? null : null,
+        now,
+        requirementId,
+        req.status,
+        ...guardBinds,
+      ),
+  ];
   if (latest) {
-    await db
-      .prepare("INSERT INTO document_reviews (id, version_id, reviewer_id, decision, comment, created_at) VALUES (?, ?, ?, ?, ?, ?)")
-      .bind(newId(), latest.id, actor.id, input.decision, input.comment ?? null, nowIso())
-      .run();
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO document_reviews (id, version_id, reviewer_id, decision, comment, created_at)
+           SELECT ?, ?, ?, ?, ?, ?
+            WHERE NOT EXISTS (SELECT 1 FROM document_versions v2 WHERE v2.requirement_id = ? AND v2.version > ?)`,
+        )
+        .bind(newId(), latest.id, actor.id, input.decision, input.comment ?? null, now, ...guardBinds),
+    );
+    if (input.decision !== "WAIVED") {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE document_versions SET review_state = ?
+              WHERE id = ? ${noNewerVersion}`,
+          )
+          .bind(input.decision, latest.id, ...guardBinds),
+      );
+    }
+  }
+  const batch = await db.batch(statements);
+  const requirementChanged = (batch[0]?.meta?.changes ?? 0) === 1;
+  const reviewRecorded = !latest || (batch[1]?.meta?.changes ?? 0) === 1;
+  if (!requirementChanged || !reviewRecorded) {
+    throw errors.conflict(
+      "The document changed while the review was being saved. Reload it and review the latest version.",
+      "DOCUMENT_CHANGED",
+    );
   }
   await writeCaseEvent(db, req.case_id, "DOCUMENT_REVIEW", `Document ${input.decision}`, actor.id);
   await writeAudit(db, { actorId: actor.id, entityType: "document_requirement", entityId: requirementId, action: "document.review", after: input, requestId });
@@ -209,6 +382,9 @@ export async function changeDocumentRoute(
   requirePermission(actor, "export_cases.edit");
   const current = await assertCaseAccess(db, actor, caseId);
   assertRouteChange(current.document_route as DocumentRoute, to, current.bank_path_status as never);
+  // Re-selecting the route that is already active must not reset the path
+  // status or write a second route event.
+  if ((current.document_route as DocumentRoute) === to) return;
   const next = initialRouteStatus(to);
   await db
     .prepare("UPDATE export_cases SET document_route = ?, bank_path_status = ?, direct_path_status = ?, version = version + 1, updated_at = ? WHERE id = ?")

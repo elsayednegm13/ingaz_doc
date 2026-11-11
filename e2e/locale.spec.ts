@@ -23,6 +23,6 @@ test("C4 Arabic and English direction persists and does not overflow", async ({ 
   const tabletOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(tabletOverflow).toBeLessThanOrEqual(1);
   await page.getByRole("button", { name: "EN" }).click();
-  await expect(page.getByText("Legal name")).toBeVisible();
+  await expect(page.getByText("Legal name", { exact: true })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
 });

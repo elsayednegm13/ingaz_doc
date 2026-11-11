@@ -1,0 +1,1166 @@
+{
+  "base": "http://127.0.0.1:43174",
+  "widths": [
+    320,
+    360,
+    375,
+    390,
+    430,
+    768,
+    1024,
+    1440
+  ],
+  "pages": [
+    "/dashboard",
+    "/export-cases",
+    "/export-cases/new",
+    "/customers",
+    "/customers/new",
+    "/bookings",
+    "/schedule",
+    "/containers",
+    "/reminders",
+    "/reports",
+    "/users",
+    "/settings",
+    "/notifications",
+    "/activity",
+    "/customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd",
+    "/export-cases/be44f799-a550-49e4-b819-805e3cd668c1",
+    "/bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963"
+  ],
+  "results": [
+    {
+      "path": "/dashboard",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28",
+          "left": 64,
+          "right": 384,
+          "width": 320,
+          "text": ""
+        },
+        {
+          "element": "div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.end-36.-bottom-24",
+          "left": -32,
+          "right": 160,
+          "width": 192,
+          "text": ""
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/dashboard",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28",
+          "left": 104,
+          "right": 424,
+          "width": 320,
+          "text": ""
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/dashboard",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28",
+          "left": 119,
+          "right": 439,
+          "width": 320,
+          "text": ""
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/dashboard",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28",
+          "left": 134,
+          "right": 454,
+          "width": 320,
+          "text": ""
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/dashboard",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28",
+          "left": 174,
+          "right": 494,
+          "width": 320,
+          "text": ""
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/dashboard",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28",
+          "left": 504,
+          "right": 824,
+          "width": 320,
+          "text": ""
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/dashboard",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28",
+          "left": 760,
+          "right": 1080,
+          "width": 320,
+          "text": ""
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/dashboard",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28",
+          "left": 1176,
+          "right": 1496,
+          "width": 320,
+          "text": ""
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/export-cases",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.grid.gap-4.xl:grid-cols-[minmax(0,1fr)_16rem] > div.hidden.overflow-hidden.rounded-2xl > div.overflow-x-auto > table.w-full.min-w-[900px].text-sm",
+          "left": 281,
+          "right": 1181,
+          "width": 900,
+          "text": "CaseCustomerInvoicesCountryDocument routeNext actionDocsGood"
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/export-cases",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/new",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/new",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/new",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/new",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/new",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/new",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/new",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/new",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-4 > div.hidden.overflow-hidden.rounded-2xl > div.overflow-x-auto > table.w-full.min-w-[760px].text-sm",
+          "left": 25,
+          "right": 785,
+          "width": 760,
+          "text": "Legal nameCountryUpdatedActionResponsive Sample 820734Respon"
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/customers",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-4 > div.hidden.overflow-hidden.rounded-2xl > div.overflow-x-auto > table.w-full.min-w-[760px].text-sm",
+          "left": 281,
+          "right": 1041,
+          "width": 760,
+          "text": "Legal nameCountryUpdatedActionResponsive Sample 820734Respon"
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/customers",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers/new",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers/new",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers/new",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers/new",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers/new",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers/new",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers/new",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers/new",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-4 > div.hidden.overflow-hidden.rounded-2xl > div.overflow-x-auto > table.w-full.min-w-[1000px].text-sm",
+          "left": 281,
+          "right": 1281,
+          "width": 1000,
+          "text": "Booking numberCustomerCasePlanned ETDPlanned ETASlotsStatusA"
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/bookings",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/schedule",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/schedule",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/schedule",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/schedule",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/schedule",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/schedule",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/schedule",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/schedule",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/containers",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/containers",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/containers",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/containers",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/containers",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/containers",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/containers",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-4 > div.hidden.overflow-hidden.rounded-2xl > div.overflow-x-auto > table.w-full.min-w-[1000px].text-sm",
+          "left": 281,
+          "right": 1281,
+          "width": 1000,
+          "text": "ContainersSlotBookingsCaseStatusLast updateActionAwaiting nu"
+        }
+      ],
+      "wide": []
+    },
+    {
+      "path": "/containers",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reminders",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reminders",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reminders",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reminders",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reminders",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reminders",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reminders",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reminders",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reports",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reports",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reports",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reports",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reports",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reports",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reports",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/reports",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/users",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/users",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/users",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/users",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/users",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/users",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/users",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/users",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/settings",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/settings",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/settings",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/settings",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/settings",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/settings",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/settings",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/settings",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/notifications",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/notifications",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/notifications",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/notifications",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/notifications",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/notifications",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/notifications",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/notifications",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/activity",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/activity",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/activity",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/activity",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/activity",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/activity",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/activity",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/activity",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm",
+          "left": 17,
+          "right": 657,
+          "width": 640,
+          "text": "CaseDestinationStatusUpdatedActionEF-2026-0002NLDraft20 Oct "
+        }
+      ],
+      "wide": [
+        {
+          "element": "div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm",
+          "width": 640
+        }
+      ]
+    },
+    {
+      "path": "/customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm",
+          "left": 17,
+          "right": 657,
+          "width": 640,
+          "text": "CaseDestinationStatusUpdatedActionEF-2026-0002NLDraft20 Oct "
+        }
+      ],
+      "wide": [
+        {
+          "element": "div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm",
+          "width": 640
+        }
+      ]
+    },
+    {
+      "path": "/customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm",
+          "left": 17,
+          "right": 657,
+          "width": 640,
+          "text": "CaseDestinationStatusUpdatedActionEF-2026-0002NLDraft20 Oct "
+        }
+      ],
+      "wide": [
+        {
+          "element": "div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm",
+          "width": 640
+        }
+      ]
+    },
+    {
+      "path": "/customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm",
+          "left": 17,
+          "right": 657,
+          "width": 640,
+          "text": "CaseDestinationStatusUpdatedActionEF-2026-0002NLDraft20 Oct "
+        }
+      ],
+      "wide": [
+        {
+          "element": "div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm",
+          "width": 640
+        }
+      ]
+    },
+    {
+      "path": "/customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [
+        {
+          "element": "div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm",
+          "left": 17,
+          "right": 657,
+          "width": 640,
+          "text": "CaseDestinationStatusUpdatedActionEF-2026-0002NLDraft20 Oct "
+        }
+      ],
+      "wide": [
+        {
+          "element": "div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm",
+          "width": 640
+        }
+      ]
+    },
+    {
+      "path": "/customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/be44f799-a550-49e4-b819-805e3cd668c1",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/be44f799-a550-49e4-b819-805e3cd668c1",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/be44f799-a550-49e4-b819-805e3cd668c1",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/be44f799-a550-49e4-b819-805e3cd668c1",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/be44f799-a550-49e4-b819-805e3cd668c1",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/be44f799-a550-49e4-b819-805e3cd668c1",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/be44f799-a550-49e4-b819-805e3cd668c1",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/export-cases/be44f799-a550-49e4-b819-805e3cd668c1",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963",
+      "width": 320,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963",
+      "width": 360,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963",
+      "width": 375,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963",
+      "width": 390,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963",
+      "width": 430,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963",
+      "width": 768,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963",
+      "width": 1024,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    },
+    {
+      "path": "/bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963",
+      "width": 1440,
+      "overflow": 0,
+      "offenders": [],
+      "wide": []
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ]
+}

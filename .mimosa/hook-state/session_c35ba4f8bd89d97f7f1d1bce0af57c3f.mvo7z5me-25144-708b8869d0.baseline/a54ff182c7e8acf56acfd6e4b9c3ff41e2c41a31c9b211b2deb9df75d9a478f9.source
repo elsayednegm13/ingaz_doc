@@ -1,0 +1,14 @@
+# ExportFlow — Agent Entry Point
+
+> This pointer is for AI coding tools that automatically discover `AGENTS.md` in a repository root.
+>
+> The owner explicitly requested `AGANT.MD` and `HANDOFF.MD`. Keep those as the complete source documents; this file is **only an index**, not another project plan.
+
+1. **Read [`AGANT.MD`](./AGANT.MD) in full.** It contains permanent business contracts, security/environment boundaries, technology, workflow and reporting requirements.
+2. **Read [`HANDOFF.MD`](./HANDOFF.MD) in full.** It states the latest evidenced checkpoint, what has/has not been tested, current blockers, owner decisions and safe starting point.
+3. Verify dated claims against current source and the exact owner-approved task scope; do not infer that an older report is still today's state.
+4. **Do not start Wrangler, Vite, Playwright or a Cloudflare plugin build** until isolation through subprocess shutdown is proven. Preserve `.wrangler/state`, `.dev.vars*`, historical fixtures, external resources and all unrelated projects.
+5. **Current standing release posture: LOCAL/PARTIAL, staging/production NO-GO.** D-1/D-2/D-3 passed isolated fake-auth/SQLite tests only; real E2E integration after changes is outstanding. Migration `0008` is not authorized for developer or remote databases.
+6. Document work and report findings to the owner **in Arabic**. Propose next work but **STOP** after the specifically authorized phase.
+
+**Creation of these documents is not authorization for an engineering checkpoint.**

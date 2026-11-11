@@ -48,6 +48,7 @@ export function useContainerStatusMutation({ bookingId }: { bookingId?: string }
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ["containers"] });
       if (bookingId) void client.invalidateQueries({ queryKey: ["booking", bookingId] });
+      void client.invalidateQueries({ queryKey: ["case"] });
       void client.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });

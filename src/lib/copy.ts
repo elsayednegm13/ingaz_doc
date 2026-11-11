@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { ApiRequestError } from "@/lib/api";
 import { errorCode, fallbackFor } from "@/lib/fail";
 
 const STORED_PREFIXES = [
@@ -55,7 +56,19 @@ const ACTIVITY: Record<string, string> = {
   "user.disable": "activity.userDisable",
   "user.enable": "activity.userEnable",
   "bootstrap.admin": "activity.bootstrap",
+  "profile.name": "activity.profileName",
+  "whatsapp_template.update": "activity.whatsappTemplate",
+  "customer_file.publish": "activity.customerFilePublish",
+  "customer_file.unpublish": "activity.customerFileUnpublish",
+  "customer_file.hide": "activity.customerFileHide",
+  "customer_file.delete": "activity.customerFileDelete",
+  "customer_file.decision": "activity.customerFileDecision",
+  "customer_file.reopen": "activity.customerFileReopen",
+  "document.restore": "activity.documentRestore",
+  "profile.email": "activity.profileEmail",
   "invoice.update": "activity.invoiceUpdate",
+  "invoice.open": "activity.invoiceOpen",
+  "invoice.lock": "activity.invoiceLock",
   "invoice.correct": "activity.invoiceCorrect",
   "booking.create": "activity.bookingCreate",
   "booking.update": "activity.bookingUpdate",
@@ -95,7 +108,8 @@ export function useCopy() {
   }
   function fail(error: unknown) {
     const code = errorCode(error);
-    return tx(`errors.${code}`, fallbackFor(code));
+    const serverMessage = error instanceof ApiRequestError ? error.message : undefined;
+    return tx(`errors.${code}`, fallbackFor(code, serverMessage));
   }
   function activity(action: string, fallback?: string) {
     const key = ACTIVITY[action];

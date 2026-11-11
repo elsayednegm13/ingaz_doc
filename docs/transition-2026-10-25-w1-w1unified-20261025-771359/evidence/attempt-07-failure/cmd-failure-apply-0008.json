@@ -1,0 +1,21 @@
+{
+  "label": "failure-apply-0008",
+  "started": "2026-10-25T20:12:30.716Z",
+  "argv": [
+    "node",
+    "node_modules/wrangler/bin/wrangler.js",
+    "d1",
+    "migrations",
+    "apply",
+    "exportflow-local",
+    "--local",
+    "--persist-to",
+    "I:\\WORK\\InjazDocs\\.wrangler-safety-20261021-w1unified-20261025-f90db1\\g1-failure\\state",
+    "--config",
+    "I:\\WORK\\InjazDocs\\.wrangler-safety-20261021-w1unified-20261025-f90db1\\g1-failure\\wrangler.g1.jsonc"
+  ],
+  "status": 1,
+  "signal": null,
+  "stdout": "\n ⛅️ wrangler 4.149.0 (update available 4.152.0)\n───────────────────────────────────────────────\nResource location: local \n\nUse --remote if you want to access the remote instance.\n\nMigrations to be applied:\n┌────────────────────────────────────────────┐\n│ name                                       │\n├────────────────────────────────────────────┤\n│ 0008_replay_safety_and_import_identity.sql │\n└────────────────────────────────────────────┘\n? About to apply 1 migration(s)\nYour database may not be available to serve requests during the migration, continue?\n🤖 Using fallback value in non-interactive context: yes\n🌀 Executing on local database exportflow-local (local-exportflow-not-a-remote-id) from ./g1-failure\\state\\v3\\d1:\n🌀 To execute on your remote database, add a --remote flag to your wrangler command.\n\n",
+  "stderr": "\u001b[31mX \u001b[41;31m[\u001b[41;97mERROR\u001b[41;31m]\u001b[0m \u001b[1mviews may not be indexed: SQLITE_ERROR\u001b[0m\n\n\n🪵  Logs were written to \"I:\\WORK\\InjazDocs\\.wrangler-safety-20261021-w1unified-20261025-f90db1\\home\\AppData\\Roaming\\xdg.config\\.wrangler\\logs\\wrangler-2026-10-25_20-12-32_173.log\"\n"
+}

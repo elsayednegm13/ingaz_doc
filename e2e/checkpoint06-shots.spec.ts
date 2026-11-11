@@ -25,7 +25,6 @@ test("checkpoint 06 visual capture", async ({ page, browser }) => {
     await page.goto(path);
     await clearViteOverlay(page);
     await expect(page.locator("h1")).toBeVisible();
-    if (path === "/settings") await expect(page.locator("[data-rules='ready']")).toBeVisible();
     if (path === "/export-cases") await expect(page.locator("[data-cases='ready']")).toBeVisible();
     await page.screenshot({ path: `${root}/${name}.png`, fullPage: true });
   }

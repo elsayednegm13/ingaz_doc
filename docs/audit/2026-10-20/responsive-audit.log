@@ -1,0 +1,158 @@
+ok         320px /dashboard overflow=0
+          offender div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28 [64..384] ""
+          offender div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.end-36.-bottom-24 [-32..160] ""
+ok         360px /dashboard overflow=0
+          offender div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28 [104..424] ""
+ok         375px /dashboard overflow=0
+          offender div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28 [119..439] ""
+ok         390px /dashboard overflow=0
+          offender div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28 [134..454] ""
+ok         430px /dashboard overflow=0
+          offender div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28 [174..494] ""
+ok         768px /dashboard overflow=0
+          offender div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28 [504..824] ""
+ok        1024px /dashboard overflow=0
+          offender div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28 [760..1080] ""
+ok        1440px /dashboard overflow=0
+          offender div.space-y-5 > section.relative.overflow-hidden.rounded-2xl > div.pointer-events-none.absolute.inset-0 > div.absolute.-end-20.-top-28 [1176..1496] ""
+ok         320px /export-cases overflow=0
+ok         360px /export-cases overflow=0
+ok         375px /export-cases overflow=0
+ok         390px /export-cases overflow=0
+ok         430px /export-cases overflow=0
+ok         768px /export-cases overflow=0
+ok        1024px /export-cases overflow=0
+          offender div.grid.gap-4.xl:grid-cols-[minmax(0,1fr)_16rem] > div.hidden.overflow-hidden.rounded-2xl > div.overflow-x-auto > table.w-full.min-w-[900px].text-sm [281..1181] "CaseCustomerInvoicesCountryDocument routeNext actionDocsGood"
+ok        1440px /export-cases overflow=0
+ok         320px /export-cases/new overflow=0
+ok         360px /export-cases/new overflow=0
+ok         375px /export-cases/new overflow=0
+ok         390px /export-cases/new overflow=0
+ok         430px /export-cases/new overflow=0
+ok         768px /export-cases/new overflow=0
+ok        1024px /export-cases/new overflow=0
+ok        1440px /export-cases/new overflow=0
+ok         320px /customers overflow=0
+ok         360px /customers overflow=0
+ok         375px /customers overflow=0
+ok         390px /customers overflow=0
+ok         430px /customers overflow=0
+ok         768px /customers overflow=0
+          offender div.space-y-4 > div.hidden.overflow-hidden.rounded-2xl > div.overflow-x-auto > table.w-full.min-w-[760px].text-sm [25..785] "Legal nameCountryUpdatedActionResponsive Sample 820734Respon"
+ok        1024px /customers overflow=0
+          offender div.space-y-4 > div.hidden.overflow-hidden.rounded-2xl > div.overflow-x-auto > table.w-full.min-w-[760px].text-sm [281..1041] "Legal nameCountryUpdatedActionResponsive Sample 820734Respon"
+ok        1440px /customers overflow=0
+ok         320px /customers/new overflow=0
+ok         360px /customers/new overflow=0
+ok         375px /customers/new overflow=0
+ok         390px /customers/new overflow=0
+ok         430px /customers/new overflow=0
+ok         768px /customers/new overflow=0
+ok        1024px /customers/new overflow=0
+ok        1440px /customers/new overflow=0
+ok         320px /bookings overflow=0
+ok         360px /bookings overflow=0
+ok         375px /bookings overflow=0
+ok         390px /bookings overflow=0
+ok         430px /bookings overflow=0
+ok         768px /bookings overflow=0
+ok        1024px /bookings overflow=0
+          offender div.space-y-4 > div.hidden.overflow-hidden.rounded-2xl > div.overflow-x-auto > table.w-full.min-w-[1000px].text-sm [281..1281] "Booking numberCustomerCasePlanned ETDPlanned ETASlotsStatusA"
+ok        1440px /bookings overflow=0
+ok         320px /schedule overflow=0
+ok         360px /schedule overflow=0
+ok         375px /schedule overflow=0
+ok         390px /schedule overflow=0
+ok         430px /schedule overflow=0
+ok         768px /schedule overflow=0
+ok        1024px /schedule overflow=0
+ok        1440px /schedule overflow=0
+ok         320px /containers overflow=0
+ok         360px /containers overflow=0
+ok         375px /containers overflow=0
+ok         390px /containers overflow=0
+ok         430px /containers overflow=0
+ok         768px /containers overflow=0
+ok        1024px /containers overflow=0
+          offender div.space-y-4 > div.hidden.overflow-hidden.rounded-2xl > div.overflow-x-auto > table.w-full.min-w-[1000px].text-sm [281..1281] "ContainersSlotBookingsCaseStatusLast updateActionAwaiting nu"
+ok        1440px /containers overflow=0
+ok         320px /reminders overflow=0
+ok         360px /reminders overflow=0
+ok         375px /reminders overflow=0
+ok         390px /reminders overflow=0
+ok         430px /reminders overflow=0
+ok         768px /reminders overflow=0
+ok        1024px /reminders overflow=0
+ok        1440px /reminders overflow=0
+ok         320px /reports overflow=0
+ok         360px /reports overflow=0
+ok         375px /reports overflow=0
+ok         390px /reports overflow=0
+ok         430px /reports overflow=0
+ok         768px /reports overflow=0
+ok        1024px /reports overflow=0
+ok        1440px /reports overflow=0
+ok         320px /users overflow=0
+ok         360px /users overflow=0
+ok         375px /users overflow=0
+ok         390px /users overflow=0
+ok         430px /users overflow=0
+ok         768px /users overflow=0
+ok        1024px /users overflow=0
+ok        1440px /users overflow=0
+ok         320px /settings overflow=0
+ok         360px /settings overflow=0
+ok         375px /settings overflow=0
+ok         390px /settings overflow=0
+ok         430px /settings overflow=0
+ok         768px /settings overflow=0
+ok        1024px /settings overflow=0
+ok        1440px /settings overflow=0
+ok         320px /notifications overflow=0
+ok         360px /notifications overflow=0
+ok         375px /notifications overflow=0
+ok         390px /notifications overflow=0
+ok         430px /notifications overflow=0
+ok         768px /notifications overflow=0
+ok        1024px /notifications overflow=0
+ok        1440px /notifications overflow=0
+ok         320px /activity overflow=0
+ok         360px /activity overflow=0
+ok         375px /activity overflow=0
+ok         390px /activity overflow=0
+ok         430px /activity overflow=0
+ok         768px /activity overflow=0
+ok        1024px /activity overflow=0
+ok        1440px /activity overflow=0
+ok         320px /customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd overflow=0
+          offender div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm [17..657] "CaseDestinationStatusUpdatedActionEF-2026-0002NLDraft20 Oct "
+ok         360px /customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd overflow=0
+          offender div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm [17..657] "CaseDestinationStatusUpdatedActionEF-2026-0002NLDraft20 Oct "
+ok         375px /customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd overflow=0
+          offender div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm [17..657] "CaseDestinationStatusUpdatedActionEF-2026-0002NLDraft20 Oct "
+ok         390px /customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd overflow=0
+          offender div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm [17..657] "CaseDestinationStatusUpdatedActionEF-2026-0002NLDraft20 Oct "
+ok         430px /customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd overflow=0
+          offender div.space-y-4 > section.min-w-0.rounded-2xl.border > div.-mx-4.overflow-x-auto.sm:mx-0 > table.w-full.min-w-[640px].text-sm [17..657] "CaseDestinationStatusUpdatedActionEF-2026-0002NLDraft20 Oct "
+ok         768px /customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd overflow=0
+ok        1024px /customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd overflow=0
+ok        1440px /customers/4ab8b76c-e307-47c8-b2fd-4cdf03eb67cd overflow=0
+ok         320px /export-cases/be44f799-a550-49e4-b819-805e3cd668c1 overflow=0
+ok         360px /export-cases/be44f799-a550-49e4-b819-805e3cd668c1 overflow=0
+ok         375px /export-cases/be44f799-a550-49e4-b819-805e3cd668c1 overflow=0
+ok         390px /export-cases/be44f799-a550-49e4-b819-805e3cd668c1 overflow=0
+ok         430px /export-cases/be44f799-a550-49e4-b819-805e3cd668c1 overflow=0
+ok         768px /export-cases/be44f799-a550-49e4-b819-805e3cd668c1 overflow=0
+ok        1024px /export-cases/be44f799-a550-49e4-b819-805e3cd668c1 overflow=0
+ok        1440px /export-cases/be44f799-a550-49e4-b819-805e3cd668c1 overflow=0
+ok         320px /bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963 overflow=0
+ok         360px /bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963 overflow=0
+ok         375px /bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963 overflow=0
+ok         390px /bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963 overflow=0
+ok         430px /bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963 overflow=0
+ok         768px /bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963 overflow=0
+ok        1024px /bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963 overflow=0
+ok        1440px /bookings/583759b0-3ed1-409e-9ed4-a9cf080b9963 overflow=0
+
+summary
+console errors: 2

@@ -40,10 +40,12 @@ function allow<T extends string>(
 const DOCUMENT_MAP: Record<DocumentRequirementStatus, readonly DocumentRequirementStatus[]> = {
   MISSING: ["UPLOADED", "WAIVED"],
   UPLOADED: ["UNDER_REVIEW", "NEEDS_CORRECTION", "MISSING"],
-  UNDER_REVIEW: ["APPROVED", "NEEDS_CORRECTION"],
-  APPROVED: ["NEEDS_CORRECTION"],
+  UNDER_REVIEW: ["APPROVED", "NEEDS_CORRECTION", "UPLOADED"],
+  // A replacement version supersedes the previous review decision; the
+  // requirement returns to UPLOADED and must be reviewed again.
+  APPROVED: ["NEEDS_CORRECTION", "UPLOADED"],
   NEEDS_CORRECTION: ["UPLOADED", "WAIVED"],
-  WAIVED: ["MISSING"],
+  WAIVED: ["MISSING", "UPLOADED"],
 };
 
 const BANK_MAP: Record<BankPathStatus, readonly BankPathStatus[]> = {

@@ -1,12 +1,15 @@
 import { readFileSync } from "node:fs";
+import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { patchReminderRule, signInWithTemporaryPassword, wranglerSql } from "./helpers";
+import { e2eRunRoot, patchReminderRule, signInWithTemporaryPassword, wranglerSql } from "./helpers";
 
 const origin = "http://127.0.0.1:43174";
 const headers = { origin };
+const runRoot = e2eRunRoot();
+const persist = path.join(runRoot, "state");
 
 function sql(command: string) {
-  return wranglerSql(".wrangler-e2e/state", command);
+  return wranglerSql(persist, command);
 }
 
 test("A2 an authenticated user without the case cannot download the file", async ({ page, browser }) => {

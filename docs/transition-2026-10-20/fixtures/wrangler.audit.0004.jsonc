@@ -1,0 +1,19 @@
+{
+  // ET-2026-10-20 audit-owned Wrangler configuration, LEGACY arm.
+  // Identical to wrangler.audit.all.jsonc except that migrations_dir points at
+  // the audit copy that contains ONLY 0001..0004, so the upgrade arm can build
+  // a populated legacy database and then be upgraded by the official runner
+  // with the shipped 0005..0007 files. The shipped migration files are copied
+  // byte for byte and are never modified.
+  "$schema": "../../../node_modules/wrangler/config-schema.json",
+  "name": "exportflow-audit",
+  "compatibility_date": "2026-10-11",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "exportflow-audit-local",
+      "database_id": "audit-only-not-a-remote-id",
+      "migrations_dir": "migrations-0004"
+    }
+  ]
+}
