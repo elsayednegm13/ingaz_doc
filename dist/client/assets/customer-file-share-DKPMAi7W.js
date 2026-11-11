@@ -1,1 +1,0 @@
-function o(t,e){return t==="ACCEPTED"&&!e}function s(t,e){return t==="APPROVED"&&e==="ACCEPTED"}function c(t){const e=new Map;for(const r of t){const n=e.get(r.requirementId);(!n||r.version>=n.version)&&e.set(r.requirementId,r)}for(const r of e.values())if(r.published&&r.decision!=="ACCEPTED")return!0;return!1}export{o as a,s as b,c};

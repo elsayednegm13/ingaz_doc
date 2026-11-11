@@ -1,1 +1,0 @@
-import{j as i}from"./index-DqAfBKNA.js";function o({open:r,children:e}){return i.jsx("div",{className:`grid transition-[grid-template-rows,opacity] duration-[180ms] ease-out ${r?"grid-rows-[1fr] opacity-100":"pointer-events-none grid-rows-[0fr] opacity-0"}`,inert:r?void 0:!0,children:i.jsx("div",{className:"overflow-hidden",children:e})})}export{o as R};
