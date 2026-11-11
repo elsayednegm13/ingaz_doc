@@ -244,3 +244,4 @@ npx wrangler deploy --env production
 2. **Hardened Session & Request Security:** Authenticated via `HttpOnly` session cookies, strict `CSRF` origin validation, and `PBKDF2-SHA256` password hashing.
 3. **Idempotent Financial & Document Mutations:** All offline outbox replays and critical POST/PUT requests carry an `Idempotency-Key` header backed by durable D1 witness records to prevent duplicate invoices or state transitions.
 4. **Immutable Audit Trail:** All document issuances, status transitions, and permission overrides are recorded in an append-only audit log with actor and timestamp attribution.
+
